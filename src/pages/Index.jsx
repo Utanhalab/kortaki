@@ -566,3 +566,185 @@ function ShopCard({ shop, units, delay, selected, onHover }) {
     </article>
   );
 }
+
+// ---------- Interactive Map with Pins ----------
+function MapView({ center, shops, units, selectedId, onSelect }) {
+  const divRef = useRef(null);
+  const mapRef = useRef(null);
+  const markersRef = useRef(new Map());
+  const userMarkerRef = useRef(null);
+  const infoRef = useRef(null);
+  const [error, setError] = useState(null);
+  const [ready, setReady] = useState(false);
+
+  // Init map
+  useEffect(() => {
+    if (!center || !divRef.current) return;
+    if (!MAPS_BROWSER_KEY) {
+      setError("Google Maps key missing");
+      return;
+    }
+    let cancelled = false;
+    loadGoogleMaps()
+      .then((google) => {
+        if (cancelled || !divRef.current) return;
+        mapRef.current = new google.maps.Map(divRef.current, {
+          center: { lat: center.lat, lng: center.lng },
+          zoom: 14,
+          disableDefaultUI: true,
+          zoomControl: true,
+          gestureHandling: "greedy",
+          backgroundColor: "#0D0D0D",
+          styles: DARK_MAP_STYLE,
+        });
+        infoRef.current = new google.maps.InfoWindow();
+        // User location pin
+        userMarkerRef.current = new google.maps.Marker({
+          position: { lat: center.lat, lng: center.lng },
+          map: mapRef.current,
+          title: "You are here",
+          zIndex: 9999,
+          icon: {
+            path: google.maps.SymbolPath.CIRCLE,
+            scale: 9,
+            fillColor: "#3B82F6",
+            fillOpacity: 1,
+            strokeColor: "#0D0D0D",
+            strokeWeight: 3,
+          },
+        });
+        setReady(true);
+      })
+      .catch((e) => setError(e.message));
+    return () => {
+      cancelled = true;
+    };
+  }, [center?.lat, center?.lng]);
+
+  // Recenter user marker when coords change
+  useEffect(() => {
+    if (ready && userMarkerRef.current && center) {
+      userMarkerRef.current.setPosition({ lat: center.lat, lng: center.lng });
+    }
+  }, [ready, center?.lat, center?.lng]);
+
+  // Sync markers with shops
+  useEffect(() => {
+    if (!ready || !mapRef.current || !window.google) return;
+    const google = window.google;
+    const existing = markersRef.current;
+    const nextIds = new Set();
+
+    shops.forEach((shop) => {
+      const lat = shop.geometry?.location?.lat;
+      const lng = shop.geometry?.location?.lng;
+      const id = shop.place_id;
+      if (lat == null || lng == null || !id) return;
+      nextIds.add(id);
+
+      let m = existing.get(id);
+      const icon = pinIcon(google, selectedId === id);
+      if (!m) {
+        m = new google.maps.Marker({
+          position: { lat, lng },
+          map: mapRef.current,
+          title: shop.name,
+          icon,
+          animation: google.maps.Animation.DROP,
+        });
+        m.addListener("click", () => {
+          onSelect?.(id);
+          const dist = shop._distKm != null && isFinite(shop._distKm)
+            ? formatDistance(shop._distKm, units)
+            : "";
+          infoRef.current.setContent(`
+            <div style="font-family:'DM Sans',sans-serif;color:#0D0D0D;min-width:180px;">
+              <div style="font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:0.04em;">${escapeHtml(shop.name || "Barbershop")}</div>
+              <div style="font-size:11px;opacity:.7;margin-top:2px;">${escapeHtml(shop.vicinity || shop.formatted_address || "")}</div>
+              <div style="display:flex;gap:8px;align-items:center;margin-top:6px;font-size:12px;">
+                ${shop.rating != null ? `<span style="color:#C8863A;">★ ${shop.rating.toFixed(1)}</span>` : ""}
+                ${dist ? `<span style="opacity:.6;">· ${dist}</span>` : ""}
+              </div>
+            </div>
+          `);
+          infoRef.current.open({ map: mapRef.current, anchor: m });
+        });
+        existing.set(id, m);
+      } else {
+        m.setPosition({ lat, lng });
+        m.setIcon(icon);
+      }
+      m.setZIndex(selectedId === id ? 999 : 1);
+    });
+
+    // Remove markers no longer present
+    existing.forEach((m, id) => {
+      if (!nextIds.has(id)) {
+        m.setMap(null);
+        existing.delete(id);
+      }
+    });
+
+    // Fit bounds when shops change set
+    if (shops.length > 0) {
+      const bounds = new google.maps.LatLngBounds();
+      bounds.extend({ lat: center.lat, lng: center.lng });
+      shops.forEach((s) => {
+        const lat = s.geometry?.location?.lat;
+        const lng = s.geometry?.location?.lng;
+        if (lat != null && lng != null) bounds.extend({ lat, lng });
+      });
+      mapRef.current.fitBounds(bounds, 60);
+    }
+  }, [ready, shops, selectedId, units, center?.lat, center?.lng, onSelect]);
+
+  // Pan to selected
+  useEffect(() => {
+    if (!ready || !selectedId) return;
+    const m = markersRef.current.get(selectedId);
+    if (m) {
+      mapRef.current.panTo(m.getPosition());
+    }
+  }, [ready, selectedId]);
+
+  if (error) {
+    return (
+      <div className="w-full h-full flex items-center justify-center text-center p-6 text-xs opacity-70">
+        Map unavailable: {error}
+      </div>
+    );
+  }
+
+  return <div ref={divRef} className="w-full h-full" />;
+}
+
+function pinIcon(google, active) {
+  return {
+    path: "M12 2C7.58 2 4 5.58 4 10c0 5.25 7 12 8 12s8-6.75 8-12c0-4.42-3.58-8-8-8z",
+    fillColor: active ? "#F5F0E8" : "#C8863A",
+    fillOpacity: 1,
+    strokeColor: "#0D0D0D",
+    strokeWeight: 2,
+    scale: active ? 2.2 : 1.8,
+    anchor: new google.maps.Point(12, 22),
+  };
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, (c) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+  }[c]));
+}
+
+const DARK_MAP_STYLE = [
+  { elementType: "geometry", stylers: [{ color: "#1a1a1a" }] },
+  { elementType: "labels.text.stroke", stylers: [{ color: "#0D0D0D" }] },
+  { elementType: "labels.text.fill", stylers: [{ color: "#8a8a8a" }] },
+  { featureType: "road", elementType: "geometry", stylers: [{ color: "#2a2a2a" }] },
+  { featureType: "road", elementType: "labels.text.fill", stylers: [{ color: "#9a9a9a" }] },
+  { featureType: "water", elementType: "geometry", stylers: [{ color: "#0a0a0a" }] },
+  { featureType: "poi", elementType: "geometry", stylers: [{ color: "#1f1f1f" }] },
+  { featureType: "poi", elementType: "labels", stylers: [{ visibility: "off" }] },
+  { featureType: "transit", stylers: [{ visibility: "off" }] },
+  { featureType: "administrative", elementType: "geometry.stroke", stylers: [{ color: "#2a2a2a" }] },
+];
