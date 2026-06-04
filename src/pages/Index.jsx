@@ -1,5 +1,25 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 
+const MAPS_BROWSER_KEY = import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY;
+const MAPS_TRACKING_ID = import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_TRACKING_ID;
+
+let mapsLoaderPromise = null;
+function loadGoogleMaps() {
+  if (typeof window === "undefined") return Promise.reject(new Error("no window"));
+  if (window.google?.maps) return Promise.resolve(window.google);
+  if (mapsLoaderPromise) return mapsLoaderPromise;
+  mapsLoaderPromise = new Promise((resolve, reject) => {
+    window.__initFadeFinderMap = () => resolve(window.google);
+    const s = document.createElement("script");
+    s.src = `https://maps.googleapis.com/maps/api/js?key=${MAPS_BROWSER_KEY}&loading=async&callback=__initFadeFinderMap&channel=${MAPS_TRACKING_ID}`;
+    s.async = true;
+    s.defer = true;
+    s.onerror = () => reject(new Error("Failed to load Google Maps"));
+    document.head.appendChild(s);
+  });
+  return mapsLoaderPromise;
+}
+
 // ============================================================
 // 🔑 REPLACE THIS WITH YOUR GOOGLE API KEY
 // Note: Google Places API does NOT support direct browser calls (CORS).
