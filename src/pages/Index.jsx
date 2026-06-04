@@ -460,7 +460,8 @@ export default function Index() {
 }
 
 // ---------- Card ----------
-function ShopCard({ shop, units, delay }) {
+function ShopCard({ shop, units, delay, selected, onHover }) {
+  const ref = useRef(null);
   const [imgErr, setImgErr] = useState(false);
   const photoRef = shop.photos?.[0]?.photo_reference;
   const img = !imgErr && photoRef ? photoUrl(photoRef) : PLACEHOLDER_IMG;
@@ -469,9 +470,17 @@ function ShopCard({ shop, units, delay }) {
   const lat = shop.geometry?.location?.lat;
   const lng = shop.geometry?.location?.lng;
 
+  useEffect(() => {
+    if (selected && ref.current) {
+      ref.current.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+  }, [selected]);
+
   return (
     <article
-      className="card card-in bg-[#1A1A1A] border border-[#2a2a2a] rounded-lg overflow-hidden flex flex-col"
+      ref={ref}
+      onMouseEnter={onHover}
+      className={`card card-in bg-[#1A1A1A] border rounded-lg overflow-hidden flex flex-col ${selected ? "border-[#C8863A] shadow-[0_0_30px_rgba(200,134,58,0.35)]" : "border-[#2a2a2a]"}`}
       style={{ animationDelay: `${delay}ms` }}
     >
       <div className="relative h-44 overflow-hidden bg-[#0D0D0D]">
