@@ -1,0 +1,12 @@
+{
+  "name": "CutNear",
+  "short_name": "CutNear",
+  "description": "Encontra a tua barbearia perfeita em Luanda",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#2e2b26",
+  "theme_color": "#2e2b26",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
