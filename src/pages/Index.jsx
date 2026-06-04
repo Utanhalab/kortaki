@@ -77,6 +77,7 @@ export default function Index() {
   const [units, setUnits] = useState("km");
   const [view, setView] = useState("list"); // list | map (mobile)
   const [sortBy, setSortBy] = useState("nearest");
+  const [selectedId, setSelectedId] = useState(null);
   const [filters, setFilters] = useState({
     openNow: false,
     topRated: false,
