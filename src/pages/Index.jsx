@@ -1,5 +1,25 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 
+const MAPS_BROWSER_KEY = import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY;
+const MAPS_TRACKING_ID = import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_TRACKING_ID;
+
+let mapsLoaderPromise = null;
+function loadGoogleMaps() {
+  if (typeof window === "undefined") return Promise.reject(new Error("no window"));
+  if (window.google?.maps) return Promise.resolve(window.google);
+  if (mapsLoaderPromise) return mapsLoaderPromise;
+  mapsLoaderPromise = new Promise((resolve, reject) => {
+    window.__initFadeFinderMap = () => resolve(window.google);
+    const s = document.createElement("script");
+    s.src = `https://maps.googleapis.com/maps/api/js?key=${MAPS_BROWSER_KEY}&loading=async&callback=__initFadeFinderMap&channel=${MAPS_TRACKING_ID}`;
+    s.async = true;
+    s.defer = true;
+    s.onerror = () => reject(new Error("Failed to load Google Maps"));
+    document.head.appendChild(s);
+  });
+  return mapsLoaderPromise;
+}
+
 // ============================================================
 // 🔑 REPLACE THIS WITH YOUR GOOGLE API KEY
 // Note: Google Places API does NOT support direct browser calls (CORS).
@@ -57,6 +77,7 @@ export default function Index() {
   const [units, setUnits] = useState("km");
   const [view, setView] = useState("list"); // list | map (mobile)
   const [sortBy, setSortBy] = useState("nearest");
+  const [selectedId, setSelectedId] = useState(null);
   const [filters, setFilters] = useState({
     openNow: false,
     topRated: false,
@@ -406,6 +427,8 @@ export default function Index() {
                     shop={p}
                     units={units}
                     delay={i * 50}
+                    selected={selectedId === p.place_id}
+                    onHover={() => setSelectedId(p.place_id)}
                   />
                 ))}
               </div>
@@ -416,12 +439,12 @@ export default function Index() {
               className={`md:w-2/5 ${view === "list" ? "hidden md:block" : "block"}`}
             >
               <div className="md:sticky md:top-24 rounded-lg overflow-hidden border border-[#2a2a2a] bg-[#1A1A1A] h-[60vh] md:h-[calc(100vh-8rem)]">
-                <iframe
-                  title="Map of nearby barbershops"
-                  className="w-full h-full"
-                  style={{ border: 0, filter: "grayscale(0.2) contrast(1.05)" }}
-                  loading="lazy"
-                  src={`https://www.google.com/maps/embed/v1/search?q=barbershop&center=${coords.lat},${coords.lng}&zoom=14&key=${GOOGLE_API_KEY}`}
+                <MapView
+                  center={coords}
+                  shops={filtered}
+                  units={units}
+                  selectedId={selectedId}
+                  onSelect={(id) => setSelectedId(id)}
                 />
               </div>
             </aside>
@@ -437,7 +460,8 @@ export default function Index() {
 }
 
 // ---------- Card ----------
-function ShopCard({ shop, units, delay }) {
+function ShopCard({ shop, units, delay, selected, onHover }) {
+  const ref = useRef(null);
   const [imgErr, setImgErr] = useState(false);
   const photoRef = shop.photos?.[0]?.photo_reference;
   const img = !imgErr && photoRef ? photoUrl(photoRef) : PLACEHOLDER_IMG;
@@ -446,9 +470,17 @@ function ShopCard({ shop, units, delay }) {
   const lat = shop.geometry?.location?.lat;
   const lng = shop.geometry?.location?.lng;
 
+  useEffect(() => {
+    if (selected && ref.current) {
+      ref.current.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+  }, [selected]);
+
   return (
     <article
-      className="card card-in bg-[#1A1A1A] border border-[#2a2a2a] rounded-lg overflow-hidden flex flex-col"
+      ref={ref}
+      onMouseEnter={onHover}
+      className={`card card-in bg-[#1A1A1A] border rounded-lg overflow-hidden flex flex-col ${selected ? "border-[#C8863A] shadow-[0_0_30px_rgba(200,134,58,0.35)]" : "border-[#2a2a2a]"}`}
       style={{ animationDelay: `${delay}ms` }}
     >
       <div className="relative h-44 overflow-hidden bg-[#0D0D0D]">
@@ -534,3 +566,185 @@ function ShopCard({ shop, units, delay }) {
     </article>
   );
 }
+
+// ---------- Interactive Map with Pins ----------
+function MapView({ center, shops, units, selectedId, onSelect }) {
+  const divRef = useRef(null);
+  const mapRef = useRef(null);
+  const markersRef = useRef(new Map());
+  const userMarkerRef = useRef(null);
+  const infoRef = useRef(null);
+  const [error, setError] = useState(null);
+  const [ready, setReady] = useState(false);
+
+  // Init map
+  useEffect(() => {
+    if (!center || !divRef.current) return;
+    if (!MAPS_BROWSER_KEY) {
+      setError("Google Maps key missing");
+      return;
+    }
+    let cancelled = false;
+    loadGoogleMaps()
+      .then((google) => {
+        if (cancelled || !divRef.current) return;
+        mapRef.current = new google.maps.Map(divRef.current, {
+          center: { lat: center.lat, lng: center.lng },
+          zoom: 14,
+          disableDefaultUI: true,
+          zoomControl: true,
+          gestureHandling: "greedy",
+          backgroundColor: "#0D0D0D",
+          styles: DARK_MAP_STYLE,
+        });
+        infoRef.current = new google.maps.InfoWindow();
+        // User location pin
+        userMarkerRef.current = new google.maps.Marker({
+          position: { lat: center.lat, lng: center.lng },
+          map: mapRef.current,
+          title: "You are here",
+          zIndex: 9999,
+          icon: {
+            path: google.maps.SymbolPath.CIRCLE,
+            scale: 9,
+            fillColor: "#3B82F6",
+            fillOpacity: 1,
+            strokeColor: "#0D0D0D",
+            strokeWeight: 3,
+          },
+        });
+        setReady(true);
+      })
+      .catch((e) => setError(e.message));
+    return () => {
+      cancelled = true;
+    };
+  }, [center?.lat, center?.lng]);
+
+  // Recenter user marker when coords change
+  useEffect(() => {
+    if (ready && userMarkerRef.current && center) {
+      userMarkerRef.current.setPosition({ lat: center.lat, lng: center.lng });
+    }
+  }, [ready, center?.lat, center?.lng]);
+
+  // Sync markers with shops
+  useEffect(() => {
+    if (!ready || !mapRef.current || !window.google) return;
+    const google = window.google;
+    const existing = markersRef.current;
+    const nextIds = new Set();
+
+    shops.forEach((shop) => {
+      const lat = shop.geometry?.location?.lat;
+      const lng = shop.geometry?.location?.lng;
+      const id = shop.place_id;
+      if (lat == null || lng == null || !id) return;
+      nextIds.add(id);
+
+      let m = existing.get(id);
+      const icon = pinIcon(google, selectedId === id);
+      if (!m) {
+        m = new google.maps.Marker({
+          position: { lat, lng },
+          map: mapRef.current,
+          title: shop.name,
+          icon,
+          animation: google.maps.Animation.DROP,
+        });
+        m.addListener("click", () => {
+          onSelect?.(id);
+          const dist = shop._distKm != null && isFinite(shop._distKm)
+            ? formatDistance(shop._distKm, units)
+            : "";
+          infoRef.current.setContent(`
+            <div style="font-family:'DM Sans',sans-serif;color:#0D0D0D;min-width:180px;">
+              <div style="font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:0.04em;">${escapeHtml(shop.name || "Barbershop")}</div>
+              <div style="font-size:11px;opacity:.7;margin-top:2px;">${escapeHtml(shop.vicinity || shop.formatted_address || "")}</div>
+              <div style="display:flex;gap:8px;align-items:center;margin-top:6px;font-size:12px;">
+                ${shop.rating != null ? `<span style="color:#C8863A;">★ ${shop.rating.toFixed(1)}</span>` : ""}
+                ${dist ? `<span style="opacity:.6;">· ${dist}</span>` : ""}
+              </div>
+            </div>
+          `);
+          infoRef.current.open({ map: mapRef.current, anchor: m });
+        });
+        existing.set(id, m);
+      } else {
+        m.setPosition({ lat, lng });
+        m.setIcon(icon);
+      }
+      m.setZIndex(selectedId === id ? 999 : 1);
+    });
+
+    // Remove markers no longer present
+    existing.forEach((m, id) => {
+      if (!nextIds.has(id)) {
+        m.setMap(null);
+        existing.delete(id);
+      }
+    });
+
+    // Fit bounds when shops change set
+    if (shops.length > 0) {
+      const bounds = new google.maps.LatLngBounds();
+      bounds.extend({ lat: center.lat, lng: center.lng });
+      shops.forEach((s) => {
+        const lat = s.geometry?.location?.lat;
+        const lng = s.geometry?.location?.lng;
+        if (lat != null && lng != null) bounds.extend({ lat, lng });
+      });
+      mapRef.current.fitBounds(bounds, 60);
+    }
+  }, [ready, shops, selectedId, units, center?.lat, center?.lng, onSelect]);
+
+  // Pan to selected
+  useEffect(() => {
+    if (!ready || !selectedId) return;
+    const m = markersRef.current.get(selectedId);
+    if (m) {
+      mapRef.current.panTo(m.getPosition());
+    }
+  }, [ready, selectedId]);
+
+  if (error) {
+    return (
+      <div className="w-full h-full flex items-center justify-center text-center p-6 text-xs opacity-70">
+        Map unavailable: {error}
+      </div>
+    );
+  }
+
+  return <div ref={divRef} className="w-full h-full" />;
+}
+
+function pinIcon(google, active) {
+  return {
+    path: "M12 2C7.58 2 4 5.58 4 10c0 5.25 7 12 8 12s8-6.75 8-12c0-4.42-3.58-8-8-8z",
+    fillColor: active ? "#F5F0E8" : "#C8863A",
+    fillOpacity: 1,
+    strokeColor: "#0D0D0D",
+    strokeWeight: 2,
+    scale: active ? 2.2 : 1.8,
+    anchor: new google.maps.Point(12, 22),
+  };
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, (c) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+  }[c]));
+}
+
+const DARK_MAP_STYLE = [
+  { elementType: "geometry", stylers: [{ color: "#1a1a1a" }] },
+  { elementType: "labels.text.stroke", stylers: [{ color: "#0D0D0D" }] },
+  { elementType: "labels.text.fill", stylers: [{ color: "#8a8a8a" }] },
+  { featureType: "road", elementType: "geometry", stylers: [{ color: "#2a2a2a" }] },
+  { featureType: "road", elementType: "labels.text.fill", stylers: [{ color: "#9a9a9a" }] },
+  { featureType: "water", elementType: "geometry", stylers: [{ color: "#0a0a0a" }] },
+  { featureType: "poi", elementType: "geometry", stylers: [{ color: "#1f1f1f" }] },
+  { featureType: "poi", elementType: "labels", stylers: [{ visibility: "off" }] },
+  { featureType: "transit", stylers: [{ visibility: "off" }] },
+  { featureType: "administrative", elementType: "geometry.stroke", stylers: [{ color: "#2a2a2a" }] },
+];
