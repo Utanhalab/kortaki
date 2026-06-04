@@ -427,6 +427,8 @@ export default function Index() {
                     shop={p}
                     units={units}
                     delay={i * 50}
+                    selected={selectedId === p.place_id}
+                    onHover={() => setSelectedId(p.place_id)}
                   />
                 ))}
               </div>
@@ -437,12 +439,12 @@ export default function Index() {
               className={`md:w-2/5 ${view === "list" ? "hidden md:block" : "block"}`}
             >
               <div className="md:sticky md:top-24 rounded-lg overflow-hidden border border-[#2a2a2a] bg-[#1A1A1A] h-[60vh] md:h-[calc(100vh-8rem)]">
-                <iframe
-                  title="Map of nearby barbershops"
-                  className="w-full h-full"
-                  style={{ border: 0, filter: "grayscale(0.2) contrast(1.05)" }}
-                  loading="lazy"
-                  src={`https://www.google.com/maps/embed/v1/search?q=barbershop&center=${coords.lat},${coords.lng}&zoom=14&key=${GOOGLE_API_KEY}`}
+                <MapView
+                  center={coords}
+                  shops={filtered}
+                  units={units}
+                  selectedId={selectedId}
+                  onSelect={(id) => setSelectedId(id)}
                 />
               </div>
             </aside>
