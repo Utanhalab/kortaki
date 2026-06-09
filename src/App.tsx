@@ -11,6 +11,9 @@ import Bookings from "./pages/Bookings";
 import MapPage from "./pages/MapPage";
 import Saved from "./pages/Saved";
 import Profile from "./pages/Profile";
+import Queue from "./pages/Queue";
+import OwnerDashboard from "./pages/OwnerDashboard";
+import OwnerQueue from "./pages/OwnerQueue";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
