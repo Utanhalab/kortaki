@@ -14,7 +14,108 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      queue_activity: {
+        Row: {
+          created_at: string
+          id: string
+          kind: string
+          message: string
+          shop_id: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kind: string
+          message: string
+          shop_id: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kind?: string
+          message?: string
+          shop_id?: number
+        }
+        Relationships: []
+      }
+      queue_entries: {
+        Row: {
+          barber_name: string | null
+          called_at: string | null
+          client_id: string
+          customer_name: string
+          done_at: string | null
+          id: string
+          joined_at: string
+          notify_at_position: number
+          position: number
+          removed_reason: string | null
+          service_duration_minutes: number
+          service_name: string
+          service_price: number
+          shop_id: number
+          status: string
+        }
+        Insert: {
+          barber_name?: string | null
+          called_at?: string | null
+          client_id: string
+          customer_name: string
+          done_at?: string | null
+          id?: string
+          joined_at?: string
+          notify_at_position?: number
+          position: number
+          removed_reason?: string | null
+          service_duration_minutes?: number
+          service_name: string
+          service_price?: number
+          shop_id: number
+          status?: string
+        }
+        Update: {
+          barber_name?: string | null
+          called_at?: string | null
+          client_id?: string
+          customer_name?: string
+          done_at?: string | null
+          id?: string
+          joined_at?: string
+          notify_at_position?: number
+          position?: number
+          removed_reason?: string | null
+          service_duration_minutes?: number
+          service_name?: string
+          service_price?: number
+          shop_id?: number
+          status?: string
+        }
+        Relationships: []
+      }
+      queue_settings: {
+        Row: {
+          avg_cut_minutes: number
+          is_open: boolean
+          max_size: number
+          shop_id: number
+          updated_at: string
+        }
+        Insert: {
+          avg_cut_minutes?: number
+          is_open?: boolean
+          max_size?: number
+          shop_id: number
+          updated_at?: string
+        }
+        Update: {
+          avg_cut_minutes?: number
+          is_open?: boolean
+          max_size?: number
+          shop_id?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
