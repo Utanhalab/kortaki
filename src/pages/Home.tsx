@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useQueueStore } from "@/store/useQueueStore";
 import { motion } from "framer-motion";
 import { Bell, Crown, Filter, LayoutGrid, MapPin, MapPinned, Phone, RefreshCw, Scissors, Search, User } from "lucide-react";
 import { Input } from "@/components/ui/input";
