@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { ArrowLeft, Phone, CalendarPlus, Navigation, Share2, Clock, Crown, Scissors, Sparkles, Wind, Flame, Users, ListOrdered } from "lucide-react";
+import { ArrowLeft, Phone, CalendarPlus, Navigation, Clock, Crown, Scissors, Sparkles, Wind, Flame, Users, ListOrdered } from "lucide-react";
 import { shops, servicesCatalog, barbers, reviews } from "@/data/shops";
 import { Stars, StatusBadge } from "@/components/bits";
 import { Button } from "@/components/ui/button";
