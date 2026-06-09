@@ -119,7 +119,7 @@ export default function Queue() {
             position={mine.position}
             ahead={ahead}
             estWait={estWait}
-            status={myStatus}
+            status={myStatus === "none" ? "waiting" : myStatus}
             totalWaiting={waitingCount}
           />
         )}
