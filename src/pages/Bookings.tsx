@@ -85,14 +85,14 @@ export default function Bookings() {
   );
 }
 
-function Empty() {
+function Empty({ label = "Sem reservas ainda" }: { label?: string }) {
   return (
     <div className="flex flex-col items-center gap-4 rounded-3xl border border-dashed border-border bg-card p-10 text-center">
       <div className="grid h-16 w-16 place-items-center rounded-full bg-cream text-primary">
         <Scissors className="h-8 w-8" />
       </div>
       <div>
-        <p className="font-display text-lg font-bold">Sem reservas ainda</p>
+        <p className="font-display text-lg font-bold">{label}</p>
         <p className="text-xs text-muted-foreground">Explora barbearias perto de ti</p>
       </div>
       <Button asChild className="rounded-full bg-primary text-gold hover:bg-primary/90">
