@@ -1,13 +1,16 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useBookingStore } from "@/store/useStores";
+import { useQueueStore } from "@/store/useQueueStore";
 import { Button } from "@/components/ui/button";
-import { Scissors, CalendarDays, User2, Clock } from "lucide-react";
+import { Scissors, CalendarDays, User2, Clock, Users, LogOut } from "lucide-react";
 import { formatKz } from "@/lib/format";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
+import { shops } from "@/data/shops";
 
 export default function Bookings() {
   const { bookings, cancelBooking } = useBookingStore();
+  const { myEntries, leaveQueue } = useQueueStore();
   const upcoming = bookings.filter((b) => b.status === "upcoming");
   const past = bookings.filter((b) => b.status === "past");
   const cancelled = bookings.filter((b) => b.status === "cancelled");
