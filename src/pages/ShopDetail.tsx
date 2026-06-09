@@ -195,16 +195,26 @@ export default function ShopDetail() {
 
       {/* Sticky CTA */}
       <div className="fixed bottom-[max(4.5rem,calc(env(safe-area-inset-bottom)+4rem))] left-1/2 z-40 w-full max-w-[430px] -translate-x-1/2 px-4">
-        <div className="flex items-center justify-between rounded-2xl bg-primary p-3 pl-5 text-primary-foreground shadow-xl">
-          <div>
+        <div className="flex items-center gap-2 rounded-2xl bg-primary p-3 pl-4 text-primary-foreground shadow-xl">
+          <div className="mr-1">
             <p className="text-[10px] uppercase tracking-wider text-gold/70">Desde</p>
-            <p className="font-display text-lg font-bold text-gold">{formatKz(shop.price)}</p>
+            <p className="font-display text-base font-bold text-gold">{formatKz(shop.price)}</p>
           </div>
-          <Button asChild className="h-11 rounded-full bg-gold px-5 font-display font-bold text-primary hover:bg-gold/90">
+          <Button
+            onClick={() => setJoinOpen(true)}
+            disabled={!queueOpen || queueFull}
+            className="h-11 flex-1 rounded-full bg-white/10 px-3 font-display text-sm font-bold text-gold hover:bg-white/15"
+          >
+            Entrar na Fila
+          </Button>
+          <Button asChild className="h-11 flex-1 rounded-full bg-gold px-3 font-display text-sm font-bold text-primary hover:bg-gold/90">
             <Link to={`/shop/${shop.id}/book`}>Reservar</Link>
           </Button>
         </div>
       </div>
+
+      <JoinQueueSheet shop={shop} open={joinOpen} onOpenChange={setJoinOpen} />
     </div>
   );
 }
+
