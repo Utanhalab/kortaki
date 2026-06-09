@@ -19,16 +19,30 @@ export default function ShopDetail() {
   const navigate = useNavigate();
   const shop = shops.find((s) => s.id === Number(id));
   const { saved, toggleSave } = useShopStore();
+  const [joinOpen, setJoinOpen] = useState(false);
+  const summary = useQueueStore((s) => s.summaries[Number(id)]);
+  const loadSummaries = useQueueStore((s) => s.loadSummaries);
+  useEffect(() => {
+    if (id) {
+      loadSummaries([Number(id)]);
+      const i = setInterval(() => loadSummaries([Number(id)]), 10000);
+      return () => clearInterval(i);
+    }
+  }, [id, loadSummaries]);
   if (!shop) return <div className="p-6">Barbearia não encontrada</div>;
 
   const isSaved = saved.includes(shop.id);
   const tierBg = shop.tier === "premium" ? "bg-primary text-gold" : shop.tier === "budget" ? "bg-sage text-primary" : "bg-cream text-primary";
+  const queueCount = summary?.count ?? 0;
+  const queueWait = summary?.avgWait ?? 0;
+  const queueOpen = summary?.isOpen ?? true;
+  const queueFull = summary ? summary.count >= summary.maxSize : false;
 
   const actions = [
     { label: "Reservar", icon: CalendarPlus, onClick: () => navigate(`/shop/${shop.id}/book`) },
+    { label: "Fila", icon: ListOrdered, onClick: () => navigate(`/shop/${shop.id}/queue`) },
     { label: "Ligar", icon: Phone, onClick: () => toast("A ligar...") },
     { label: "Direções", icon: Navigation, onClick: () => toast("A abrir mapa...") },
-    { label: "Partilhar", icon: Share2, onClick: () => toast.success("Link copiado") },
   ];
 
   return (
