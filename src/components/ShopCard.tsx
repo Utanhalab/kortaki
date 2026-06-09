@@ -1,11 +1,12 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { Crown, Scissors, MapPin, Clock } from "lucide-react";
+import { Crown, Scissors, MapPin, Clock, Users } from "lucide-react";
 import { Shop } from "@/data/shops";
 import { Button } from "@/components/ui/button";
 import { Stars, StatusBadge } from "./bits";
 import { formatDist, formatKz } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { useQueueStore } from "@/store/useQueueStore";
 
 const tierBlock = {
   premium: "bg-primary text-gold",
@@ -20,6 +21,7 @@ const tierLabel = {
 } as const;
 
 export function ShopCard({ shop, index = 0 }: { shop: Shop; index?: number }) {
+  const summary = useQueueStore((s) => s.summaries[shop.id]);
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
@@ -42,6 +44,11 @@ export function ShopCard({ shop, index = 0 }: { shop: Shop; index?: number }) {
           <div className="flex items-center gap-3 text-xs text-muted-foreground">
             <span className="inline-flex items-center gap-1"><MapPin className="h-3 w-3 text-gold" /> {formatDist(shop.dist)}</span>
             <span className="inline-flex items-center gap-1"><Clock className="h-3 w-3 text-gold" /> {shop.closesAt}</span>
+            {summary && summary.count > 0 && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-warning/15 px-1.5 py-0.5 text-[10px] font-semibold text-warning">
+                <Users className="h-3 w-3" /> {summary.count} na fila
+              </span>
+            )}
           </div>
           <div className="flex items-center gap-2">
             <Stars rating={shop.rating} />

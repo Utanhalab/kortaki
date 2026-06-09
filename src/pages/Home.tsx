@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useQueueStore } from "@/store/useQueueStore";
 import { motion } from "framer-motion";
 import { Bell, Crown, Filter, LayoutGrid, MapPin, MapPinned, Phone, RefreshCw, Scissors, Search, User } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -27,6 +28,14 @@ export default function Home() {
   const { shops, filter, setFilter, search, setSearch, sort, setSort, view, setView } = useShopStore();
   const navigate = useNavigate();
   const [maxPrice, setMaxPrice] = useState(10000);
+  const loadSummaries = useQueueStore((s) => s.loadSummaries);
+
+  useEffect(() => {
+    const ids = shops.map((s) => s.id);
+    loadSummaries(ids);
+    const i = setInterval(() => loadSummaries(ids), 20000);
+    return () => clearInterval(i);
+  }, [shops, loadSummaries]);
 
   const filtered = useMemo(() => {
     let list = shops.filter((s) => s.price <= maxPrice);

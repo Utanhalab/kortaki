@@ -1,5 +1,6 @@
+import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { ArrowLeft, Phone, CalendarPlus, Navigation, Share2, Clock, Crown, Scissors, Sparkles, Wind, Flame } from "lucide-react";
+import { ArrowLeft, Phone, CalendarPlus, Navigation, Clock, Crown, Scissors, Sparkles, Wind, Flame, Users, ListOrdered } from "lucide-react";
 import { shops, servicesCatalog, barbers, reviews } from "@/data/shops";
 import { Stars, StatusBadge } from "@/components/bits";
 import { Button } from "@/components/ui/button";
@@ -8,6 +9,8 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useShopStore } from "@/store/useStores";
 import { Heart } from "lucide-react";
+import { JoinQueueSheet } from "@/components/JoinQueueSheet";
+import { useQueueStore } from "@/store/useQueueStore";
 
 const iconMap = { Scissors, Sparkles, Wind, Flame, Crown };
 
@@ -16,16 +19,30 @@ export default function ShopDetail() {
   const navigate = useNavigate();
   const shop = shops.find((s) => s.id === Number(id));
   const { saved, toggleSave } = useShopStore();
+  const [joinOpen, setJoinOpen] = useState(false);
+  const summary = useQueueStore((s) => s.summaries[Number(id)]);
+  const loadSummaries = useQueueStore((s) => s.loadSummaries);
+  useEffect(() => {
+    if (id) {
+      loadSummaries([Number(id)]);
+      const i = setInterval(() => loadSummaries([Number(id)]), 10000);
+      return () => clearInterval(i);
+    }
+  }, [id, loadSummaries]);
   if (!shop) return <div className="p-6">Barbearia não encontrada</div>;
 
   const isSaved = saved.includes(shop.id);
   const tierBg = shop.tier === "premium" ? "bg-primary text-gold" : shop.tier === "budget" ? "bg-sage text-primary" : "bg-cream text-primary";
+  const queueCount = summary?.count ?? 0;
+  const queueWait = summary?.avgWait ?? 0;
+  const queueOpen = summary?.isOpen ?? true;
+  const queueFull = summary ? summary.count >= summary.maxSize : false;
 
   const actions = [
     { label: "Reservar", icon: CalendarPlus, onClick: () => navigate(`/shop/${shop.id}/book`) },
+    { label: "Fila", icon: ListOrdered, onClick: () => navigate(`/shop/${shop.id}/queue`) },
     { label: "Ligar", icon: Phone, onClick: () => toast("A ligar...") },
     { label: "Direções", icon: Navigation, onClick: () => toast("A abrir mapa...") },
-    { label: "Partilhar", icon: Share2, onClick: () => toast.success("Link copiado") },
   ];
 
   return (
@@ -82,10 +99,35 @@ export default function ShopDetail() {
           ))}
         </div>
 
+        <button
+          onClick={() => navigate(`/shop/${shop.id}/queue`)}
+          className={cn(
+            "flex w-full items-center justify-between rounded-2xl border p-3 text-left transition-colors",
+            !queueOpen || queueFull
+              ? "border-destructive/40 bg-destructive/10"
+              : queueCount > 0
+                ? "border-gold/40 bg-gold/10"
+                : "border-border bg-card hover:bg-muted",
+          )}
+        >
+          <span className="inline-flex items-center gap-2 text-sm font-semibold">
+            <Users className={cn("h-4 w-4", !queueOpen || queueFull ? "text-destructive" : "text-gold")} />
+            {!queueOpen
+              ? "Fila em pausa"
+              : queueFull
+                ? "Fila cheia"
+                : `Fila: ${queueCount} em espera · ~${queueWait} min`}
+          </span>
+          <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+            Ver →
+          </span>
+        </button>
+
         <div className="flex items-center gap-2 rounded-2xl border border-border bg-card p-3 text-sm">
           <Clock className="h-4 w-4 text-gold" />
           <span className="font-medium">{shop.status === "closed" ? shop.closesAt : `Aberto até ${shop.closesAt}`}</span>
         </div>
+
 
         {/* Services */}
         <section>
@@ -153,16 +195,26 @@ export default function ShopDetail() {
 
       {/* Sticky CTA */}
       <div className="fixed bottom-[max(4.5rem,calc(env(safe-area-inset-bottom)+4rem))] left-1/2 z-40 w-full max-w-[430px] -translate-x-1/2 px-4">
-        <div className="flex items-center justify-between rounded-2xl bg-primary p-3 pl-5 text-primary-foreground shadow-xl">
-          <div>
+        <div className="flex items-center gap-2 rounded-2xl bg-primary p-3 pl-4 text-primary-foreground shadow-xl">
+          <div className="mr-1">
             <p className="text-[10px] uppercase tracking-wider text-gold/70">Desde</p>
-            <p className="font-display text-lg font-bold text-gold">{formatKz(shop.price)}</p>
+            <p className="font-display text-base font-bold text-gold">{formatKz(shop.price)}</p>
           </div>
-          <Button asChild className="h-11 rounded-full bg-gold px-5 font-display font-bold text-primary hover:bg-gold/90">
+          <Button
+            onClick={() => setJoinOpen(true)}
+            disabled={!queueOpen || queueFull}
+            className="h-11 flex-1 rounded-full bg-white/10 px-3 font-display text-sm font-bold text-gold hover:bg-white/15"
+          >
+            Entrar na Fila
+          </Button>
+          <Button asChild className="h-11 flex-1 rounded-full bg-gold px-3 font-display text-sm font-bold text-primary hover:bg-gold/90">
             <Link to={`/shop/${shop.id}/book`}>Reservar</Link>
           </Button>
         </div>
       </div>
+
+      <JoinQueueSheet shop={shop} open={joinOpen} onOpenChange={setJoinOpen} />
     </div>
   );
 }
+
