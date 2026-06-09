@@ -29,10 +29,13 @@ const App = () => (
             <Route path="/" element={<Home />} />
             <Route path="/shop/:id" element={<ShopDetail />} />
             <Route path="/shop/:id/book" element={<Booking />} />
+            <Route path="/shop/:id/queue" element={<Queue />} />
             <Route path="/bookings" element={<Bookings />} />
             <Route path="/map" element={<MapPage />} />
             <Route path="/saved" element={<Saved />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/dashboard" element={<OwnerDashboard />} />
+            <Route path="/dashboard/queue" element={<OwnerQueue />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AppShell>
