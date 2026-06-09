@@ -1,11 +1,12 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { Crown, Scissors, MapPin, Clock } from "lucide-react";
+import { Crown, Scissors, MapPin, Clock, Users } from "lucide-react";
 import { Shop } from "@/data/shops";
 import { Button } from "@/components/ui/button";
 import { Stars, StatusBadge } from "./bits";
 import { formatDist, formatKz } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { useQueueStore } from "@/store/useQueueStore";
 
 const tierBlock = {
   premium: "bg-primary text-gold",
