@@ -99,10 +99,35 @@ export default function ShopDetail() {
           ))}
         </div>
 
+        <button
+          onClick={() => navigate(`/shop/${shop.id}/queue`)}
+          className={cn(
+            "flex w-full items-center justify-between rounded-2xl border p-3 text-left transition-colors",
+            !queueOpen || queueFull
+              ? "border-destructive/40 bg-destructive/10"
+              : queueCount > 0
+                ? "border-gold/40 bg-gold/10"
+                : "border-border bg-card hover:bg-muted",
+          )}
+        >
+          <span className="inline-flex items-center gap-2 text-sm font-semibold">
+            <Users className={cn("h-4 w-4", !queueOpen || queueFull ? "text-destructive" : "text-gold")} />
+            {!queueOpen
+              ? "Fila em pausa"
+              : queueFull
+                ? "Fila cheia"
+                : `Fila: ${queueCount} em espera · ~${queueWait} min`}
+          </span>
+          <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+            Ver →
+          </span>
+        </button>
+
         <div className="flex items-center gap-2 rounded-2xl border border-border bg-card p-3 text-sm">
           <Clock className="h-4 w-4 text-gold" />
           <span className="font-medium">{shop.status === "closed" ? shop.closesAt : `Aberto até ${shop.closesAt}`}</span>
         </div>
+
 
         {/* Services */}
         <section>
