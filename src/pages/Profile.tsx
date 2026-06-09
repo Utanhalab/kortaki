@@ -49,6 +49,19 @@ export default function Profile() {
         </div>
       </div>
 
+      <section className="px-4 pt-4">
+        <Link
+          to="/dashboard"
+          className="flex items-center justify-between rounded-2xl border-2 border-gold bg-primary p-4 text-gold"
+        >
+          <div>
+            <p className="text-[10px] uppercase tracking-wider text-gold/70">Para barbeiros</p>
+            <p className="font-display text-base font-bold">Painel do Dono</p>
+          </div>
+          <ChevronRight className="h-5 w-5" />
+        </Link>
+      </section>
+
       <section className="p-4">
         <h2 className="mb-2 font-display text-sm font-bold uppercase tracking-wider text-muted-foreground">Definições</h2>
         <div className="overflow-hidden rounded-2xl border border-border bg-card">
