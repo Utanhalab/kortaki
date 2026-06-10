@@ -71,9 +71,7 @@ export default function Home() {
             <span className="font-display text-xl font-bold text-gold">CutNear</span>
           </div>
           <div className="flex items-center gap-1">
-            <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full text-gold hover:bg-white/10 hover:text-gold">
-              <Bell className="h-5 w-5" />
-            </Button>
+            <BellButton />
             <Button onClick={() => navigate("/profile")} variant="ghost" size="icon" className="h-9 w-9 rounded-full text-gold hover:bg-white/10 hover:text-gold">
               <User className="h-5 w-5" />
             </Button>
