@@ -228,3 +228,18 @@ export default function Home() {
     </div>
   );
 }
+
+function BellButton() {
+  const navigate = useNavigate();
+  const unread = useUnreadCount();
+  return (
+    <Button onClick={() => navigate("/notifications")} variant="ghost" size="icon" className="relative h-9 w-9 rounded-full text-gold hover:bg-white/10 hover:text-gold">
+      <Bell className="h-5 w-5" />
+      {unread > 0 && (
+        <span className="absolute -right-0.5 -top-0.5 min-w-[18px] rounded-full bg-destructive px-1 text-[10px] font-bold leading-[18px] text-white">
+          {unread > 9 ? "9+" : unread}
+        </span>
+      )}
+    </Button>
+  );
+}
