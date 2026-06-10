@@ -14,6 +14,7 @@ import { formatKz } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { useUnreadCount } from "@/pages/Notifications";
 
 const TABS: { key: FilterKey; label: string }[] = [
   { key: "all", label: "Todos" },
@@ -71,9 +72,7 @@ export default function Home() {
             <span className="font-display text-xl font-bold text-gold">CutNear</span>
           </div>
           <div className="flex items-center gap-1">
-            <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full text-gold hover:bg-white/10 hover:text-gold">
-              <Bell className="h-5 w-5" />
-            </Button>
+            <BellButton />
             <Button onClick={() => navigate("/profile")} variant="ghost" size="icon" className="h-9 w-9 rounded-full text-gold hover:bg-white/10 hover:text-gold">
               <User className="h-5 w-5" />
             </Button>
@@ -228,5 +227,20 @@ export default function Home() {
         )}
       </div>
     </div>
+  );
+}
+
+function BellButton() {
+  const navigate = useNavigate();
+  const unread = useUnreadCount();
+  return (
+    <Button onClick={() => navigate("/notifications")} variant="ghost" size="icon" className="relative h-9 w-9 rounded-full text-gold hover:bg-white/10 hover:text-gold">
+      <Bell className="h-5 w-5" />
+      {unread > 0 && (
+        <span className="absolute -right-0.5 -top-0.5 min-w-[18px] rounded-full bg-destructive px-1 text-[10px] font-bold leading-[18px] text-white">
+          {unread > 9 ? "9+" : unread}
+        </span>
+      )}
+    </Button>
   );
 }

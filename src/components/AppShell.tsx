@@ -1,19 +1,33 @@
 import { ReactNode, useEffect } from "react";
 import { BottomNav } from "./BottomNav";
 import { AnimatePresence, motion } from "framer-motion";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useQueueStore } from "@/store/useQueueStore";
 
 export function AppShell({ children }: { children: ReactNode }) {
   const { pathname } = useLocation();
+  const navigate = useNavigate();
   const { loadMyEntries, subscribeMine } = useQueueStore();
-  const hideNav = pathname.startsWith("/dashboard");
+  const hideNav = pathname.startsWith("/dashboard") || pathname === "/auth";
 
   useEffect(() => {
     loadMyEntries();
     const off = subscribeMine();
     return off;
   }, [loadMyEntries, subscribeMine]);
+
+  // Handle in-app deep links from the service worker
+  useEffect(() => {
+    if (!("serviceWorker" in navigator)) return;
+    const handler = (event: MessageEvent) => {
+      const msg = event.data;
+      if (msg?.kind === "navigate" && typeof msg.url === "string") {
+        navigate(msg.url);
+      }
+    };
+    navigator.serviceWorker.addEventListener("message", handler);
+    return () => navigator.serviceWorker.removeEventListener("message", handler);
+  }, [navigate]);
 
   return (
     <div className="min-h-screen bg-muted/40 sm:py-6">
@@ -37,4 +51,3 @@ export function AppShell({ children }: { children: ReactNode }) {
     </div>
   );
 }
-
