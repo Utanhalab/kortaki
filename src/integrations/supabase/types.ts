@@ -14,228 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      bookings: {
-        Row: {
-          appointment_at: string
-          barber_name: string | null
-          cancelled_by: string | null
-          cancelled_reason: string | null
-          created_at: string
-          id: string
-          price: number
-          reminded_types: string[]
-          service_name: string
-          shop_id: number
-          shop_name: string
-          status: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          appointment_at: string
-          barber_name?: string | null
-          cancelled_by?: string | null
-          cancelled_reason?: string | null
-          created_at?: string
-          id?: string
-          price?: number
-          reminded_types?: string[]
-          service_name: string
-          shop_id: number
-          shop_name: string
-          status?: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          appointment_at?: string
-          barber_name?: string | null
-          cancelled_by?: string | null
-          cancelled_reason?: string | null
-          created_at?: string
-          id?: string
-          price?: number
-          reminded_types?: string[]
-          service_name?: string
-          shop_id?: number
-          shop_name?: string
-          status?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      notification_preferences: {
-        Row: {
-          booking_cancelled: boolean
-          booking_confirmed: boolean
-          promotions: boolean
-          queue_alerts: boolean
-          reminder_15: boolean
-          reminder_24h: boolean
-          reminder_60: boolean
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          booking_cancelled?: boolean
-          booking_confirmed?: boolean
-          promotions?: boolean
-          queue_alerts?: boolean
-          reminder_15?: boolean
-          reminder_24h?: boolean
-          reminder_60?: boolean
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          booking_cancelled?: boolean
-          booking_confirmed?: boolean
-          promotions?: boolean
-          queue_alerts?: boolean
-          reminder_15?: boolean
-          reminder_24h?: boolean
-          reminder_60?: boolean
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      notifications: {
-        Row: {
-          body: string
-          data: Json
-          id: string
-          read: boolean
-          sent_at: string
-          shop_id: number | null
-          title: string
-          type: string
-          user_id: string
-        }
-        Insert: {
-          body: string
-          data?: Json
-          id?: string
-          read?: boolean
-          sent_at?: string
-          shop_id?: number | null
-          title: string
-          type: string
-          user_id: string
-        }
-        Update: {
-          body?: string
-          data?: Json
-          id?: string
-          read?: boolean
-          sent_at?: string
-          shop_id?: number | null
-          title?: string
-          type?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      profiles: {
-        Row: {
-          avatar_url: string | null
-          client_id: string | null
-          created_at: string
-          display_name: string | null
-          id: string
-          locale: string
-          phone: string | null
-          updated_at: string
-        }
-        Insert: {
-          avatar_url?: string | null
-          client_id?: string | null
-          created_at?: string
-          display_name?: string | null
-          id: string
-          locale?: string
-          phone?: string | null
-          updated_at?: string
-        }
-        Update: {
-          avatar_url?: string | null
-          client_id?: string | null
-          created_at?: string
-          display_name?: string | null
-          id?: string
-          locale?: string
-          phone?: string | null
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      promotion_sends: {
-        Row: {
-          audience_type: string
-          id: string
-          message: string
-          recipient_count: number
-          scheduled_for: string | null
-          sent_at: string
-          sent_by: string
-          shop_id: number
-        }
-        Insert: {
-          audience_type: string
-          id?: string
-          message: string
-          recipient_count?: number
-          scheduled_for?: string | null
-          sent_at?: string
-          sent_by: string
-          shop_id: number
-        }
-        Update: {
-          audience_type?: string
-          id?: string
-          message?: string
-          recipient_count?: number
-          scheduled_for?: string | null
-          sent_at?: string
-          sent_by?: string
-          shop_id?: number
-        }
-        Relationships: []
-      }
-      push_subscriptions: {
-        Row: {
-          auth: string
-          created_at: string
-          endpoint: string
-          id: string
-          p256dh: string
-          updated_at: string
-          user_agent: string | null
-          user_id: string
-        }
-        Insert: {
-          auth: string
-          created_at?: string
-          endpoint: string
-          id?: string
-          p256dh: string
-          updated_at?: string
-          user_agent?: string | null
-          user_id: string
-        }
-        Update: {
-          auth?: string
-          created_at?: string
-          endpoint?: string
-          id?: string
-          p256dh?: string
-          updated_at?: string
-          user_agent?: string | null
-          user_id?: string
-        }
-        Relationships: []
-      }
       queue_activity: {
         Row: {
           created_at: string
@@ -277,7 +55,6 @@ export type Database = {
           service_price: number
           shop_id: number
           status: string
-          user_id: string | null
         }
         Insert: {
           barber_name?: string | null
@@ -295,7 +72,6 @@ export type Database = {
           service_price?: number
           shop_id: number
           status?: string
-          user_id?: string | null
         }
         Update: {
           barber_name?: string | null
@@ -313,7 +89,6 @@ export type Database = {
           service_price?: number
           shop_id?: number
           status?: string
-          user_id?: string | null
         }
         Relationships: []
       }
@@ -341,36 +116,12 @@ export type Database = {
         }
         Relationships: []
       }
-      shop_owners: {
-        Row: {
-          created_at: string
-          id: string
-          shop_id: number
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          shop_id: number
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          shop_id?: number
-          user_id?: string
-        }
-        Relationships: []
-      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      is_shop_owner: {
-        Args: { _shop_id: number; _user_id: string }
-        Returns: boolean
-      }
+      [_ in never]: never
     }
     Enums: {
       [_ in never]: never

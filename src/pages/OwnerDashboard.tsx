@@ -7,7 +7,6 @@ import {
   BarChart3,
   Calendar,
   ListOrdered,
-  Megaphone,
   Settings2,
   Users,
 } from "lucide-react";
@@ -47,9 +46,9 @@ export default function OwnerDashboard() {
 
         <div className="grid grid-cols-2 gap-2">
           <Tile to="/dashboard/queue" icon={ListOrdered} title="Gerir Fila" subtitle="Próximo cliente, remover, pausar" highlight />
-          <Tile to="/dashboard/promotions/new" icon={Megaphone} title="Enviar Promoção" subtitle="Notificar clientes" />
           <Tile to="#" icon={Calendar} title="Reservas" subtitle="Em breve" disabled />
           <Tile to="#" icon={BarChart3} title="Estatísticas" subtitle="Em breve" disabled />
+          <Tile to="#" icon={Settings2} title="Definições" subtitle="Em breve" disabled />
         </div>
 
         <div>
