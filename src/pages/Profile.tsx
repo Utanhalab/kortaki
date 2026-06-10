@@ -1,21 +1,31 @@
-import { Bell, MapPin, Languages, HelpCircle, LogOut, ChevronRight } from "lucide-react";
+import { Bell, MapPin, Languages, HelpCircle, LogOut, ChevronRight, LogIn } from "lucide-react";
 import { useBookingStore, useShopStore } from "@/store/useStores";
 import { Switch } from "@/components/ui/switch";
 import { useState } from "react";
 import { shops } from "@/data/shops";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 export default function Profile() {
+  const navigate = useNavigate();
   const { bookings } = useBookingStore();
   const { saved } = useShopStore();
+  const { user, signOut } = useAuth();
   const [lang, setLang] = useState(true);
 
+  const displayName = (user?.user_metadata?.full_name as string) ?? user?.email?.split("@")[0] ?? "Convidado";
+  const initials = displayName.split(" ").filter(Boolean).slice(0, 2).map((n) => n[0]?.toUpperCase()).join("") || "JD";
+
   const settings = [
-    { icon: Bell, label: "Notificações", right: <Switch defaultChecked /> },
+    { icon: Bell, label: "Notificações", right: <ChevronRight className="h-4 w-4 text-muted-foreground" />, onClick: () => navigate("/profile/notifications") },
     { icon: MapPin, label: "Localização", right: <Switch defaultChecked /> },
     { icon: Languages, label: "Idioma", right: <span className="text-xs font-semibold text-gold">{lang ? "PT" : "EN"}</span>, onClick: () => setLang(!lang) },
     { icon: HelpCircle, label: "Ajuda", right: <ChevronRight className="h-4 w-4 text-muted-foreground" /> },
-    { icon: LogOut, label: "Terminar Sessão", right: <ChevronRight className="h-4 w-4 text-muted-foreground" />, danger: true },
+    user
+      ? { icon: LogOut, label: "Terminar Sessão", right: <ChevronRight className="h-4 w-4 text-muted-foreground" />, danger: true, onClick: async () => { await signOut(); toast("Sessão terminada"); } }
+      : { icon: LogIn, label: "Entrar / Registar", right: <ChevronRight className="h-4 w-4 text-muted-foreground" />, onClick: () => navigate("/auth") },
   ];
 
   const stats = [
@@ -29,12 +39,15 @@ export default function Profile() {
       <header className="bg-primary px-4 pt-[max(1.5rem,env(safe-area-inset-top))] pb-8 text-primary-foreground">
         <div className="flex items-center gap-4">
           <div className="grid h-16 w-16 place-items-center rounded-full bg-gold font-display text-2xl font-bold text-primary">
-            JD
+            {initials}
           </div>
-          <div>
-            <h1 className="font-display text-xl font-bold text-white">João Domingos</h1>
-            <p className="text-xs text-gold/80">joao.d@cutnear.ao</p>
+          <div className="flex-1">
+            <h1 className="font-display text-xl font-bold text-white">{displayName}</h1>
+            <p className="text-xs text-gold/80">{user?.email ?? "Sem sessão iniciada"}</p>
           </div>
+          {!user && (
+            <Button onClick={() => navigate("/auth")} size="sm" className="rounded-full bg-gold text-primary hover:bg-gold/90">Entrar</Button>
+          )}
         </div>
       </header>
 
@@ -50,10 +63,7 @@ export default function Profile() {
       </div>
 
       <section className="px-4 pt-4">
-        <Link
-          to="/dashboard"
-          className="flex items-center justify-between rounded-2xl border-2 border-gold bg-primary p-4 text-gold"
-        >
+        <Link to="/dashboard" className="flex items-center justify-between rounded-2xl border-2 border-gold bg-primary p-4 text-gold">
           <div>
             <p className="text-[10px] uppercase tracking-wider text-gold/70">Para barbeiros</p>
             <p className="font-display text-base font-bold">Painel do Dono</p>
@@ -69,10 +79,10 @@ export default function Profile() {
             <button
               key={s.label}
               onClick={s.onClick}
-              className={`flex w-full items-center justify-between gap-3 px-4 py-3 text-left ${i > 0 ? "border-t border-border" : ""} ${s.danger ? "text-destructive" : ""}`}
+              className={`flex w-full items-center justify-between gap-3 px-4 py-3 text-left ${i > 0 ? "border-t border-border" : ""} ${(s as any).danger ? "text-destructive" : ""}`}
             >
               <div className="flex items-center gap-3">
-                <s.icon className={`h-4 w-4 ${s.danger ? "text-destructive" : "text-gold"}`} />
+                <s.icon className={`h-4 w-4 ${(s as any).danger ? "text-destructive" : "text-gold"}`} />
                 <span className="text-sm font-medium">{s.label}</span>
               </div>
               {s.right}

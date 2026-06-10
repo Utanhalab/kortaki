@@ -6,6 +6,9 @@ import { useBookingStore } from "@/store/useStores";
 import { formatKz } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { sendNotification } from "@/hooks/usePushNotifications";
 
 const TIMES = ["09:00","09:30","10:00","10:30","11:00","11:30","14:00","14:30","15:00","15:30","16:00","16:30","17:00","17:30","18:00"];
 const TAKEN = new Set(["10:00","11:30","15:00","17:30"]);
@@ -25,6 +28,7 @@ function next7Days() {
 export default function Booking() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const shop = shops.find((s) => s.id === Number(id));
   const { selectedService, selectedBarber, selectedDate, selectedTime, setService, setBarber, setDate, setTime, addBooking, reset } = useBookingStore();
 
@@ -33,10 +37,35 @@ export default function Booking() {
   const svc = servicesCatalog.find((s) => s.id === selectedService);
   const canConfirm = !!(selectedService && selectedBarber && selectedDate && selectedTime);
 
-  const confirm = () => {
+  const confirm = async () => {
     if (!canConfirm || !svc) return;
+    if (!user) {
+      toast.error("Inicie sessão para reservar");
+      navigate("/auth");
+      return;
+    }
+    const appointment_at = new Date(`${selectedDate}T${selectedTime}:00`).toISOString();
+    const { data, error } = await supabase
+      .from("bookings")
+      .insert({
+        user_id: user.id,
+        shop_id: shop.id,
+        shop_name: shop.name,
+        service_name: svc.name,
+        barber_name: selectedBarber,
+        appointment_at,
+        price: svc.price,
+        status: "confirmed",
+      })
+      .select()
+      .single();
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    // Local mirror (in-app list)
     addBooking({
-      id: crypto.randomUUID(),
+      id: data.id,
       shopId: shop.id,
       shopName: shop.name,
       service: svc.name,
@@ -46,6 +75,16 @@ export default function Booking() {
       price: svc.price,
       status: "upcoming",
     });
+    // Booking confirmed push
+    sendNotification({
+      user_id: user.id,
+      title: "🗓️ Reserva confirmada!",
+      body: `${svc.name} no dia ${selectedDate} às ${selectedTime} em ${shop.name}`,
+      type: "booking_confirmed",
+      shop_id: shop.id,
+      url: "/bookings",
+      data: { booking_id: data.id },
+    }).catch(() => {});
     toast.success("Reserva confirmada!");
     reset();
     navigate("/bookings");
@@ -64,7 +103,6 @@ export default function Booking() {
       </header>
 
       <div className="space-y-6 p-4">
-        {/* Service */}
         <section>
           <h2 className="mb-2 font-display text-sm font-bold uppercase tracking-wider text-muted-foreground">1. Serviço</h2>
           <div className="space-y-2">
@@ -90,7 +128,6 @@ export default function Booking() {
           </div>
         </section>
 
-        {/* Barber */}
         <section>
           <h2 className="mb-2 font-display text-sm font-bold uppercase tracking-wider text-muted-foreground">2. Barbeiro</h2>
           <div className="no-scrollbar -mx-4 flex gap-3 overflow-x-auto px-4">
@@ -116,7 +153,6 @@ export default function Booking() {
           </div>
         </section>
 
-        {/* Date */}
         <section>
           <h2 className="mb-2 font-display text-sm font-bold uppercase tracking-wider text-muted-foreground">3. Data</h2>
           <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4">
@@ -136,7 +172,6 @@ export default function Booking() {
           </div>
         </section>
 
-        {/* Time */}
         <section>
           <h2 className="mb-2 font-display text-sm font-bold uppercase tracking-wider text-muted-foreground">4. Hora</h2>
           <div className="grid grid-cols-3 gap-2">
@@ -162,7 +197,6 @@ export default function Booking() {
           </div>
         </section>
 
-        {/* Summary */}
         {canConfirm && svc && (
           <div className="rounded-2xl border border-gold/40 bg-gold/5 p-4">
             <h3 className="mb-2 font-display text-sm font-bold">Resumo</h3>

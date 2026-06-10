@@ -181,11 +181,13 @@ export const useQueueStore = create<QueueStore>((set, get) => ({
     if ((existing?.length ?? 0) >= settings.max_size) throw new Error("Fila cheia");
 
     const pos = (existing?.length ?? 0) + 1;
+    const { data: authUser } = await supabase.auth.getUser();
     const { data, error } = await supabase
       .from("queue_entries")
       .insert({
         shop_id: shopId,
         client_id: clientId,
+        user_id: authUser.user?.id ?? null,
         customer_name: name,
         service_name: serviceName,
         service_price: servicePrice,
@@ -229,13 +231,37 @@ export const useQueueStore = create<QueueStore>((set, get) => ({
       .eq("id", data.id);
     await logActivity(shopId, "called", `${data.customer_name} foi chamado(a)`);
 
-    // Mark anyone "called" before as done implicitly when a new one is called? Keep simple: previous "called" becomes done.
+    // Previous "called" rolls over to "done"
     await supabase
       .from("queue_entries")
       .update({ status: "done", done_at: new Date().toISOString() })
       .eq("shop_id", shopId)
       .eq("status", "called")
       .neq("id", data.id);
+
+    // Push "your turn" notification (best-effort, fire-and-forget)
+    if ((data as any).user_id) {
+      const PROJECT_ID = (import.meta as any).env.VITE_SUPABASE_PROJECT_ID;
+      const ANON = (import.meta as any).env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      const { data: { session } } = await supabase.auth.getSession();
+      fetch(`https://${PROJECT_ID}.supabase.co/functions/v1/send-notification`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          apikey: ANON,
+          Authorization: `Bearer ${session?.access_token ?? ANON}`,
+        },
+        body: JSON.stringify({
+          user_id: (data as any).user_id,
+          title: "✅ É a sua vez!",
+          body: `O seu barbeiro está pronto. Dirija-se à barbearia agora.`,
+          type: "barber_ready",
+          shop_id: shopId,
+          url: `/shop/${shopId}/queue`,
+          data: { vibrate: [200, 100, 200] },
+        }),
+      }).catch(() => {});
+    }
 
     await recomputePositions(shopId);
   },
