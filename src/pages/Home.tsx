@@ -14,6 +14,7 @@ import { formatKz } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { useUnreadCount } from "@/pages/Notifications";
 
 const TABS: { key: FilterKey; label: string }[] = [
   { key: "all", label: "Todos" },
