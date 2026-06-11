@@ -1,8 +1,10 @@
-import { useNavigate, useParams } from "react-router-dom";
+import { useEffect } from "react";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { ArrowLeft, Check } from "lucide-react";
-import { shops, servicesCatalog, barbers } from "@/data/shops";
+import { shops, servicesCatalog } from "@/data/shops";
 import { Button } from "@/components/ui/button";
 import { useBookingStore } from "@/store/useStores";
+import { useBarberStore } from "@/store/useBarberStore";
 import { formatKz } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -25,8 +27,22 @@ function next7Days() {
 export default function Booking() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [params] = useSearchParams();
   const shop = shops.find((s) => s.id === Number(id));
   const { selectedService, selectedBarber, selectedDate, selectedTime, setService, setBarber, setDate, setTime, addBooking, reset } = useBookingStore();
+  const barbersByShop = useBarberStore((s) => s.barbersByShop);
+  const fetchShopBarbers = useBarberStore((s) => s.fetchShopBarbers);
+  const barbers = shop ? (barbersByShop[shop.id] ?? []) : [];
+
+  useEffect(() => { if (shop) fetchShopBarbers(shop.id); }, [shop, fetchShopBarbers]);
+
+  // Prefill from query string (from BarberProfile)
+  useEffect(() => {
+    const b = params.get("barber"); if (b) setBarber(b);
+    const d = params.get("date"); if (d) setDate(d);
+    const t = params.get("time"); if (t) setTime(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (!shop) return null;
   const days = next7Days();
@@ -94,6 +110,19 @@ export default function Booking() {
         <section>
           <h2 className="mb-2 font-display text-sm font-bold uppercase tracking-wider text-muted-foreground">2. Barbeiro</h2>
           <div className="no-scrollbar -mx-4 flex gap-3 overflow-x-auto px-4">
+            <button
+              onClick={() => setBarber("Qualquer disponível")}
+              className={cn(
+                "w-28 shrink-0 rounded-2xl border bg-card p-3 text-center transition-all",
+                selectedBarber === "Qualquer disponível" ? "border-gold ring-2 ring-gold/30" : "border-border",
+              )}
+            >
+              <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-cream font-display text-xs font-bold text-primary">
+                Auto
+              </div>
+              <p className="mt-2 text-xs font-semibold">Qualquer</p>
+              <p className="text-[10px] text-muted-foreground">Menor espera</p>
+            </button>
             {barbers.map((b) => (
               <button
                 key={b.id}
@@ -105,12 +134,14 @@ export default function Booking() {
               >
                 <div className="relative mx-auto h-14 w-14">
                   <div className="grid h-14 w-14 place-items-center rounded-full bg-primary font-display text-lg font-bold text-gold">
-                    {b.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
+                    {b.avatar_url
+                      ? <img src={b.avatar_url} alt={b.name} className="h-full w-full rounded-full object-cover" />
+                      : b.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
                   </div>
-                  <span className={cn("absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-card", b.available ? "bg-success" : "bg-destructive")} />
+                  <span className={cn("absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-card", b.is_active ? "bg-success" : "bg-muted-foreground")} />
                 </div>
                 <p className="mt-2 text-xs font-semibold">{b.name.split(" ")[0]}</p>
-                <p className="text-[10px] text-muted-foreground">{b.specialty}</p>
+                <p className="truncate text-[10px] text-muted-foreground">{b.specialties[0] ?? "—"}</p>
               </button>
             ))}
           </div>

@@ -7,7 +7,7 @@ import { useQueueStore } from "@/store/useQueueStore";
 export function AppShell({ children }: { children: ReactNode }) {
   const { pathname } = useLocation();
   const { loadMyEntries, subscribeMine } = useQueueStore();
-  const hideNav = pathname.startsWith("/dashboard");
+  const hideNav = pathname.startsWith("/dashboard") || pathname.startsWith("/auth");
 
   useEffect(() => {
     loadMyEntries();

@@ -14,6 +14,192 @@ export type Database = {
   }
   public: {
     Tables: {
+      barber_hours: {
+        Row: {
+          barber_id: string
+          break_end: string | null
+          break_start: string | null
+          day_of_week: number
+          end_time: string
+          id: string
+          is_working: boolean
+          start_time: string
+        }
+        Insert: {
+          barber_id: string
+          break_end?: string | null
+          break_start?: string | null
+          day_of_week: number
+          end_time?: string
+          id?: string
+          is_working?: boolean
+          start_time?: string
+        }
+        Update: {
+          barber_id?: string
+          break_end?: string | null
+          break_start?: string | null
+          day_of_week?: number
+          end_time?: string
+          id?: string
+          is_working?: boolean
+          start_time?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "barber_hours_barber_id_fkey"
+            columns: ["barber_id"]
+            isOneToOne: false
+            referencedRelation: "barbers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      barber_reviews: {
+        Row: {
+          barber_id: string
+          barber_reply: string | null
+          booking_id: string | null
+          comment: string | null
+          created_at: string
+          customer_name: string
+          id: string
+          photo_url: string | null
+          rating: number
+          replied_at: string | null
+          service_name: string | null
+          user_id: string | null
+        }
+        Insert: {
+          barber_id: string
+          barber_reply?: string | null
+          booking_id?: string | null
+          comment?: string | null
+          created_at?: string
+          customer_name: string
+          id?: string
+          photo_url?: string | null
+          rating: number
+          replied_at?: string | null
+          service_name?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          barber_id?: string
+          barber_reply?: string | null
+          booking_id?: string | null
+          comment?: string | null
+          created_at?: string
+          customer_name?: string
+          id?: string
+          photo_url?: string | null
+          rating?: number
+          replied_at?: string | null
+          service_name?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "barber_reviews_barber_id_fkey"
+            columns: ["barber_id"]
+            isOneToOne: false
+            referencedRelation: "barbers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      barber_services: {
+        Row: {
+          barber_id: string
+          custom_duration_minutes: number | null
+          id: string
+          is_available: boolean
+          service_id: string
+        }
+        Insert: {
+          barber_id: string
+          custom_duration_minutes?: number | null
+          id?: string
+          is_available?: boolean
+          service_id: string
+        }
+        Update: {
+          barber_id?: string
+          custom_duration_minutes?: number | null
+          id?: string
+          is_available?: boolean
+          service_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "barber_services_barber_id_fkey"
+            columns: ["barber_id"]
+            isOneToOne: false
+            referencedRelation: "barbers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      barbers: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          created_at: string
+          experience_years: number
+          id: string
+          is_active: boolean
+          is_verified: boolean
+          languages: string[]
+          name: string
+          rating_avg: number
+          rating_count: number
+          shop_id: number
+          specialties: string[]
+          tagline: string | null
+          total_cuts: number
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          experience_years?: number
+          id?: string
+          is_active?: boolean
+          is_verified?: boolean
+          languages?: string[]
+          name: string
+          rating_avg?: number
+          rating_count?: number
+          shop_id: number
+          specialties?: string[]
+          tagline?: string | null
+          total_cuts?: number
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          experience_years?: number
+          id?: string
+          is_active?: boolean
+          is_verified?: boolean
+          languages?: string[]
+          name?: string
+          rating_avg?: number
+          rating_count?: number
+          shop_id?: number
+          specialties?: string[]
+          tagline?: string | null
+          total_cuts?: number
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       bookings: {
         Row: {
           appointment_at: string
@@ -136,6 +322,47 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      portfolio_photos: {
+        Row: {
+          barber_id: string
+          created_at: string
+          description: string | null
+          id: string
+          position: number
+          public_url: string
+          storage_path: string
+          style_label: string | null
+        }
+        Insert: {
+          barber_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          position?: number
+          public_url: string
+          storage_path: string
+          style_label?: string | null
+        }
+        Update: {
+          barber_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          position?: number
+          public_url?: string
+          storage_path?: string
+          style_label?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portfolio_photos_barber_id_fkey"
+            columns: ["barber_id"]
+            isOneToOne: false
+            referencedRelation: "barbers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -341,6 +568,32 @@ export type Database = {
         }
         Relationships: []
       }
+      saved_barbers: {
+        Row: {
+          barber_id: string
+          saved_at: string
+          user_id: string
+        }
+        Insert: {
+          barber_id: string
+          saved_at?: string
+          user_id: string
+        }
+        Update: {
+          barber_id?: string
+          saved_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saved_barbers_barber_id_fkey"
+            columns: ["barber_id"]
+            isOneToOne: false
+            referencedRelation: "barbers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       shop_owners: {
         Row: {
           created_at: string
@@ -367,6 +620,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_manage_barber: {
+        Args: { _barber_id: string; _user_id: string }
+        Returns: boolean
+      }
       is_shop_owner: {
         Args: { _shop_id: number; _user_id: string }
         Returns: boolean
