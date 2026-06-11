@@ -156,20 +156,39 @@ export default function ShopDetail() {
 
         {/* Barbers */}
         <section>
-          <h2 className="mb-3 font-display text-lg font-bold">Barbeiros</h2>
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="font-display text-lg font-bold">Equipa ({barbers.length})</h2>
+            <Link to={`/shop/${shop.id}/barbers`} className="inline-flex items-center text-xs font-semibold text-gold">
+              Ver todos <ChevronRight className="h-3 w-3" />
+            </Link>
+          </div>
           <div className="no-scrollbar -mx-4 flex gap-3 overflow-x-auto px-4">
             {barbers.map((b) => (
-              <div key={b.id} className="w-28 shrink-0 rounded-2xl border border-border bg-card p-3 text-center">
-                <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-primary font-display text-lg font-bold text-gold">
-                  {b.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
+              <Link
+                to={`/barber/${b.id}`}
+                key={b.id}
+                className="w-28 shrink-0 rounded-2xl border border-border bg-card p-3 text-center hover:border-gold"
+              >
+                <div className="relative mx-auto h-14 w-14">
+                  <div className="grid h-14 w-14 place-items-center rounded-full bg-primary font-display text-lg font-bold text-gold">
+                    {b.avatar_url
+                      ? <img src={b.avatar_url} className="h-full w-full rounded-full object-cover" alt={b.name} />
+                      : b.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
+                  </div>
+                  {b.is_verified && (
+                    <span className="absolute -bottom-1 right-0 grid h-4 w-4 place-items-center rounded-full bg-gold text-[9px] text-primary">✓</span>
+                  )}
                 </div>
-                <p className="mt-2 text-xs font-semibold">{b.name}</p>
-                <p className="text-[10px] text-muted-foreground">{b.specialty}</p>
+                <p className="mt-2 text-xs font-semibold">{b.name.split(" ")[0]}</p>
+                <p className="truncate text-[10px] text-muted-foreground">{b.specialties[0] ?? "—"}</p>
                 <div className="mt-1 inline-flex items-center gap-1 text-[11px]">
-                  <Stars rating={b.rating} size={10} />
+                  <Stars rating={b.rating_avg} size={10} />
                 </div>
-              </div>
+              </Link>
             ))}
+            {barbers.length === 0 && (
+              <p className="px-2 py-4 text-xs text-muted-foreground">Sem barbeiros ainda</p>
+            )}
           </div>
         </section>
 
