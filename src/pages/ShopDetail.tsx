@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { ArrowLeft, Phone, CalendarPlus, Navigation, Clock, Crown, Scissors, Sparkles, Wind, Flame, Users, ListOrdered } from "lucide-react";
-import { shops, servicesCatalog, barbers, reviews } from "@/data/shops";
+import { ArrowLeft, Phone, CalendarPlus, Navigation, Clock, Crown, Scissors, Sparkles, Wind, Flame, Users, ListOrdered, ChevronRight } from "lucide-react";
+import { shops, servicesCatalog, reviews } from "@/data/shops";
 import { Stars, StatusBadge } from "@/components/bits";
 import { Button } from "@/components/ui/button";
 import { formatKz } from "@/lib/format";
@@ -11,6 +11,7 @@ import { useShopStore } from "@/store/useStores";
 import { Heart } from "lucide-react";
 import { JoinQueueSheet } from "@/components/JoinQueueSheet";
 import { useQueueStore } from "@/store/useQueueStore";
+import { useBarberStore } from "@/store/useBarberStore";
 
 const iconMap = { Scissors, Sparkles, Wind, Flame, Crown };
 
