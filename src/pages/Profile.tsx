@@ -1,22 +1,29 @@
-import { Bell, MapPin, Languages, HelpCircle, LogOut, ChevronRight } from "lucide-react";
+import { Bell, MapPin, Languages, HelpCircle, LogOut, ChevronRight, LogIn, User as UserIcon } from "lucide-react";
 import { useBookingStore, useShopStore } from "@/store/useStores";
 import { Switch } from "@/components/ui/switch";
+import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { shops } from "@/data/shops";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/lib/auth";
+import { toast } from "sonner";
 
 export default function Profile() {
   const { bookings } = useBookingStore();
   const { saved } = useShopStore();
   const [lang, setLang] = useState(true);
+  const { user, signOut } = useAuth();
 
   const settings = [
     { icon: Bell, label: "Notificações", right: <Switch defaultChecked /> },
     { icon: MapPin, label: "Localização", right: <Switch defaultChecked /> },
     { icon: Languages, label: "Idioma", right: <span className="text-xs font-semibold text-gold">{lang ? "PT" : "EN"}</span>, onClick: () => setLang(!lang) },
     { icon: HelpCircle, label: "Ajuda", right: <ChevronRight className="h-4 w-4 text-muted-foreground" /> },
-    { icon: LogOut, label: "Terminar Sessão", right: <ChevronRight className="h-4 w-4 text-muted-foreground" />, danger: true },
   ];
+
+  const displayName = (user?.user_metadata?.full_name as string) ?? user?.email?.split("@")[0] ?? "Convidado";
+  const email = user?.email ?? "Sem sessão iniciada";
+  const initials = displayName.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
 
   const stats = [
     { label: "Reservas", value: bookings.length },
@@ -29,13 +36,18 @@ export default function Profile() {
       <header className="bg-primary px-4 pt-[max(1.5rem,env(safe-area-inset-top))] pb-8 text-primary-foreground">
         <div className="flex items-center gap-4">
           <div className="grid h-16 w-16 place-items-center rounded-full bg-gold font-display text-2xl font-bold text-primary">
-            JD
+            {user ? initials : <UserIcon className="h-7 w-7" />}
           </div>
-          <div>
-            <h1 className="font-display text-xl font-bold text-white">João Domingos</h1>
-            <p className="text-xs text-gold/80">joao.d@cutnear.ao</p>
+          <div className="flex-1">
+            <h1 className="font-display text-xl font-bold text-white">{displayName}</h1>
+            <p className="text-xs text-gold/80">{email}</p>
           </div>
         </div>
+        {!user && (
+          <Button asChild className="mt-4 w-full rounded-full bg-gold font-display font-bold text-primary hover:bg-gold/90">
+            <Link to="/auth"><LogIn className="mr-1.5 h-4 w-4" /> Entrar / Criar conta</Link>
+          </Button>
+        )}
       </header>
 
       <div className="-mt-5 px-4">
@@ -69,15 +81,27 @@ export default function Profile() {
             <button
               key={s.label}
               onClick={s.onClick}
-              className={`flex w-full items-center justify-between gap-3 px-4 py-3 text-left ${i > 0 ? "border-t border-border" : ""} ${s.danger ? "text-destructive" : ""}`}
+              className={`flex w-full items-center justify-between gap-3 px-4 py-3 text-left ${i > 0 ? "border-t border-border" : ""}`}
             >
               <div className="flex items-center gap-3">
-                <s.icon className={`h-4 w-4 ${s.danger ? "text-destructive" : "text-gold"}`} />
+                <s.icon className="h-4 w-4 text-gold" />
                 <span className="text-sm font-medium">{s.label}</span>
               </div>
               {s.right}
             </button>
           ))}
+          {user && (
+            <button
+              onClick={async () => { await signOut(); toast.success("Sessão terminada"); }}
+              className="flex w-full items-center justify-between gap-3 border-t border-border px-4 py-3 text-left text-destructive"
+            >
+              <div className="flex items-center gap-3">
+                <LogOut className="h-4 w-4" />
+                <span className="text-sm font-medium">Terminar Sessão</span>
+              </div>
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          )}
         </div>
       </section>
 
