@@ -7,7 +7,6 @@ import {
   BarChart3,
   Calendar,
   ListOrdered,
-  Settings2,
   Users,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
