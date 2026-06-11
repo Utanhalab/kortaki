@@ -123,12 +123,18 @@ function BookingCard({ b, onCancel, variant = "upcoming" }: { b: any; onCancel?:
         )}
         {variant === "past" && (
           <>
-            <Button size="sm" variant="outline" className="flex-1 rounded-full">Rebookar</Button>
-            <Button size="sm" className="flex-1 rounded-full bg-primary text-gold hover:bg-primary/90">Avaliar</Button>
+            <Button asChild size="sm" variant="outline" className="flex-1 rounded-full">
+              <Link to={`/shop/${b.shopId}/book?barber=${encodeURIComponent(b.barber)}`}>Rebookar com {b.barber.split(" ")[0]}</Link>
+            </Button>
+            <Button asChild size="sm" className="flex-1 rounded-full bg-primary text-gold hover:bg-primary/90">
+              <Link to={`/bookings/${b.id}/review?service=${encodeURIComponent(b.service)}`}>Avaliar {b.barber.split(" ")[0]}</Link>
+            </Button>
           </>
         )}
         {variant === "cancelled" && (
-          <Button size="sm" className="flex-1 rounded-full bg-primary text-gold hover:bg-primary/90">Rebookar</Button>
+          <Button asChild size="sm" className="flex-1 rounded-full bg-primary text-gold hover:bg-primary/90">
+            <Link to={`/shop/${b.shopId}/book`}>Rebookar</Link>
+          </Button>
         )}
       </div>
     </div>
