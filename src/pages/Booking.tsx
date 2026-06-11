@@ -1,8 +1,10 @@
-import { useNavigate, useParams } from "react-router-dom";
+import { useEffect } from "react";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { ArrowLeft, Check } from "lucide-react";
-import { shops, servicesCatalog, barbers } from "@/data/shops";
+import { shops, servicesCatalog } from "@/data/shops";
 import { Button } from "@/components/ui/button";
 import { useBookingStore } from "@/store/useStores";
+import { useBarberStore } from "@/store/useBarberStore";
 import { formatKz } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
