@@ -1,23 +1,15 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { ArrowLeft, Camera, Star, Trash2, Sparkles } from "lucide-react";
+import { ArrowLeft, Camera, Star } from "lucide-react";
 import { motion } from "framer-motion";
 import { useBarberStore } from "@/store/useBarberStore";
 import { useAuth } from "@/lib/auth";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { Stars } from "@/components/bits";
 import { shops } from "@/data/shops";
-import { SPECIALTIES, LANGUAGE_FLAGS } from "@/data/specialties";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-
-const DAYS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
-const LANGS = ["Português", "English", "Français", "Other"];
 
 type ConfettiPiece = { id: number; left: number; delay: number; color: string };
 
