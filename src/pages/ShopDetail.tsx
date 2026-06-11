@@ -23,6 +23,10 @@ export default function ShopDetail() {
   const [joinOpen, setJoinOpen] = useState(false);
   const summary = useQueueStore((s) => s.summaries[Number(id)]);
   const loadSummaries = useQueueStore((s) => s.loadSummaries);
+  const barbersByShop = useBarberStore((s) => s.barbersByShop);
+  const fetchShopBarbers = useBarberStore((s) => s.fetchShopBarbers);
+  const barbers = barbersByShop[Number(id)] ?? [];
+  useEffect(() => { if (id) fetchShopBarbers(Number(id)); }, [id, fetchShopBarbers]);
   useEffect(() => {
     if (id) {
       loadSummaries([Number(id)]);
