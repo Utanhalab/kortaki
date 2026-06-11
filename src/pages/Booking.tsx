@@ -27,8 +27,22 @@ function next7Days() {
 export default function Booking() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [params] = useSearchParams();
   const shop = shops.find((s) => s.id === Number(id));
   const { selectedService, selectedBarber, selectedDate, selectedTime, setService, setBarber, setDate, setTime, addBooking, reset } = useBookingStore();
+  const barbersByShop = useBarberStore((s) => s.barbersByShop);
+  const fetchShopBarbers = useBarberStore((s) => s.fetchShopBarbers);
+  const barbers = shop ? (barbersByShop[shop.id] ?? []) : [];
+
+  useEffect(() => { if (shop) fetchShopBarbers(shop.id); }, [shop, fetchShopBarbers]);
+
+  // Prefill from query string (from BarberProfile)
+  useEffect(() => {
+    const b = params.get("barber"); if (b) setBarber(b);
+    const d = params.get("date"); if (d) setDate(d);
+    const t = params.get("time"); if (t) setTime(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (!shop) return null;
   const days = next7Days();
