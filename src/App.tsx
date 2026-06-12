@@ -53,6 +53,11 @@ const App = () => (
               <Route path="/dashboard" element={<OwnerDashboard />} />
               <Route path="/dashboard/queue" element={<OwnerQueue />} />
               <Route path="/dashboard/barber/profile" element={<BarberEdit />} />
+              <Route path="/dashboard/gallery/upload" element={<GalleryUpload />} />
+              <Route path="/gallery" element={<Gallery />} />
+              <Route path="/gallery/search" element={<GallerySearch />} />
+              <Route path="/gallery/style/:styleId" element={<StyleDetail />} />
+              <Route path="/profile/wishlist" element={<Wishlist />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </AppShell>
