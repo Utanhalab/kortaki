@@ -6,6 +6,7 @@ import {
   ArrowLeft,
   BarChart3,
   Calendar,
+  ImagePlus,
   ListOrdered,
   Users,
 } from "lucide-react";
