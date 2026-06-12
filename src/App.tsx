@@ -20,6 +20,11 @@ import BarberProfile from "./pages/BarberProfile";
 import ShopBarbers from "./pages/ShopBarbers";
 import BarberEdit from "./pages/BarberEdit";
 import ReviewSubmit from "./pages/ReviewSubmit";
+import Gallery from "./pages/Gallery";
+import StyleDetail from "./pages/StyleDetail";
+import GallerySearch from "./pages/GallerySearch";
+import Wishlist from "./pages/Wishlist";
+import GalleryUpload from "./pages/GalleryUpload";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
