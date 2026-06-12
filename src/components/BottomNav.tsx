@@ -1,13 +1,13 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { Compass, MapPinned, CalendarCheck, Heart, User } from "lucide-react";
+import { Compass, MapPinned, CalendarCheck, Sparkles, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useQueueStore } from "@/store/useQueueStore";
 
 const items = [
   { to: "/", label: "Explorar", icon: Compass, exact: true, badgeKey: "queue" as const },
+  { to: "/gallery", label: "Galeria", icon: Sparkles },
   { to: "/map", label: "Mapa", icon: MapPinned },
   { to: "/bookings", label: "Reservas", icon: CalendarCheck, badgeKey: "queue" as const },
-  { to: "/saved", label: "Guardados", icon: Heart },
   { to: "/profile", label: "Perfil", icon: User },
 ];
 

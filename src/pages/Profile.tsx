@@ -61,7 +61,17 @@ export default function Profile() {
         </div>
       </div>
 
-      <section className="px-4 pt-4">
+      <section className="px-4 pt-4 space-y-2">
+        <Link
+          to="/profile/wishlist"
+          className="flex items-center justify-between rounded-2xl border border-border bg-card p-4"
+        >
+          <div>
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Galeria</p>
+            <p className="font-display text-sm font-bold">Estilos Guardados</p>
+          </div>
+          <ChevronRight className="h-5 w-5 text-muted-foreground" />
+        </Link>
         <Link
           to="/dashboard"
           className="flex items-center justify-between rounded-2xl border-2 border-gold bg-primary p-4 text-gold"

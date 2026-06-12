@@ -214,6 +214,8 @@ export type Database = {
           shop_id: number
           shop_name: string
           status: string
+          style_photo_id: string | null
+          style_reference_url: string | null
           updated_at: string
           user_id: string
         }
@@ -230,6 +232,8 @@ export type Database = {
           shop_id: number
           shop_name: string
           status?: string
+          style_photo_id?: string | null
+          style_reference_url?: string | null
           updated_at?: string
           user_id: string
         }
@@ -246,10 +250,20 @@ export type Database = {
           shop_id?: number
           shop_name?: string
           status?: string
+          style_photo_id?: string | null
+          style_reference_url?: string | null
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "bookings_style_photo_id_fkey"
+            columns: ["style_photo_id"]
+            isOneToOne: false
+            referencedRelation: "style_photos"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       notification_preferences: {
         Row: {
@@ -594,6 +608,53 @@ export type Database = {
           },
         ]
       }
+      saved_styles: {
+        Row: {
+          saved_at: string
+          style_photo_id: string
+          user_id: string
+        }
+        Insert: {
+          saved_at?: string
+          style_photo_id: string
+          user_id: string
+        }
+        Update: {
+          saved_at?: string
+          style_photo_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saved_styles_style_photo_id_fkey"
+            columns: ["style_photo_id"]
+            isOneToOne: false
+            referencedRelation: "style_photos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      search_history: {
+        Row: {
+          id: string
+          query: string
+          searched_at: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          query: string
+          searched_at?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          query?: string
+          searched_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       shop_owners: {
         Row: {
           created_at: string
@@ -615,6 +676,143 @@ export type Database = {
         }
         Relationships: []
       }
+      style_categories: {
+        Row: {
+          created_at: string
+          icon: string | null
+          id: string
+          name_pt: string
+          position: number
+          slug: string
+        }
+        Insert: {
+          created_at?: string
+          icon?: string | null
+          id?: string
+          name_pt: string
+          position?: number
+          slug: string
+        }
+        Update: {
+          created_at?: string
+          icon?: string | null
+          id?: string
+          name_pt?: string
+          position?: number
+          slug?: string
+        }
+        Relationships: []
+      }
+      style_photos: {
+        Row: {
+          barber_id: string
+          booking_count: number
+          category_id: string | null
+          created_at: string
+          description: string | null
+          id: string
+          is_featured: boolean
+          is_public: boolean
+          public_url: string
+          save_count: number
+          service_id: string | null
+          shop_id: number
+          storage_path: string
+          style_name: string
+          tags: string[]
+          updated_at: string
+          view_count: number
+        }
+        Insert: {
+          barber_id: string
+          booking_count?: number
+          category_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_featured?: boolean
+          is_public?: boolean
+          public_url: string
+          save_count?: number
+          service_id?: string | null
+          shop_id: number
+          storage_path: string
+          style_name: string
+          tags?: string[]
+          updated_at?: string
+          view_count?: number
+        }
+        Update: {
+          barber_id?: string
+          booking_count?: number
+          category_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_featured?: boolean
+          is_public?: boolean
+          public_url?: string
+          save_count?: number
+          service_id?: string | null
+          shop_id?: number
+          storage_path?: string
+          style_name?: string
+          tags?: string[]
+          updated_at?: string
+          view_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "style_photos_barber_id_fkey"
+            columns: ["barber_id"]
+            isOneToOne: false
+            referencedRelation: "barbers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "style_photos_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "style_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      style_trending: {
+        Row: {
+          style_photo_id: string
+          trending_score: number | null
+          updated_at: string
+          weekly_bookings: number
+          weekly_saves: number
+          weekly_views: number
+        }
+        Insert: {
+          style_photo_id: string
+          trending_score?: number | null
+          updated_at?: string
+          weekly_bookings?: number
+          weekly_saves?: number
+          weekly_views?: number
+        }
+        Update: {
+          style_photo_id?: string
+          trending_score?: number | null
+          updated_at?: string
+          weekly_bookings?: number
+          weekly_saves?: number
+          weekly_views?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "style_trending_style_photo_id_fkey"
+            columns: ["style_photo_id"]
+            isOneToOne: true
+            referencedRelation: "style_photos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -624,6 +822,11 @@ export type Database = {
         Args: { _barber_id: string; _user_id: string }
         Returns: boolean
       }
+      increment_booking_count: {
+        Args: { photo_id: string }
+        Returns: undefined
+      }
+      increment_view_count: { Args: { photo_id: string }; Returns: undefined }
       is_shop_owner: {
         Args: { _shop_id: number; _user_id: string }
         Returns: boolean
