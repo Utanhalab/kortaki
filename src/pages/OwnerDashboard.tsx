@@ -47,6 +47,7 @@ export default function OwnerDashboard() {
         <div className="grid grid-cols-2 gap-2">
           <Tile to="/dashboard/queue" icon={ListOrdered} title="Gerir Fila" subtitle="Próximo cliente, remover, pausar" highlight />
           <Tile to="/dashboard/barber/profile" icon={Users} title="Perfil Barbeiro" subtitle="Portfólio, horário, especialidades" />
+          <Tile to="/dashboard/gallery/upload" icon={ImagePlus} title="Adicionar ao Portfólio" subtitle="Publicar novo estilo" />
           <Tile to="#" icon={Calendar} title="Reservas" subtitle="Em breve" disabled />
           <Tile to="#" icon={BarChart3} title="Estatísticas" subtitle="Em breve" disabled />
         </div>
