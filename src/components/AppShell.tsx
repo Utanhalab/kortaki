@@ -16,8 +16,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   }, [loadMyEntries, subscribeMine]);
 
   return (
-    <div className="min-h-screen bg-muted/40 sm:py-6">
-      <div className="mx-auto flex min-h-screen w-full max-w-[430px] flex-col overflow-hidden bg-background sm:min-h-[860px] sm:rounded-[2.25rem] sm:phone-frame">
+    <div className="min-h-screen bg-background md:bg-muted/40">
+      <div className="mx-auto flex min-h-screen w-full max-w-[430px] flex-col overflow-hidden bg-background md:max-w-none">
         <div className="relative flex-1 overflow-y-auto">
           <AnimatePresence mode="wait">
             <motion.div
@@ -32,7 +32,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             </motion.div>
           </AnimatePresence>
         </div>
-        {!hideNav && <BottomNav />}
+        {!hideNav && <div className="md:hidden"><BottomNav /></div>}
       </div>
     </div>
   );
