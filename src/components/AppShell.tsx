@@ -1,5 +1,6 @@
 import { ReactNode, useEffect } from "react";
 import { BottomNav } from "./BottomNav";
+import { TopNav } from "./TopNav";
 import { AnimatePresence, motion } from "framer-motion";
 import { useLocation } from "react-router-dom";
 import { useQueueStore } from "@/store/useQueueStore";
