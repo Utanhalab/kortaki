@@ -1,5 +1,6 @@
 import { ReactNode, useEffect } from "react";
 import { BottomNav } from "./BottomNav";
+import { TopNav } from "./TopNav";
 import { AnimatePresence, motion } from "framer-motion";
 import { useLocation } from "react-router-dom";
 import { useQueueStore } from "@/store/useQueueStore";
@@ -16,9 +17,10 @@ export function AppShell({ children }: { children: ReactNode }) {
   }, [loadMyEntries, subscribeMine]);
 
   return (
-    <div className="min-h-screen bg-background md:bg-muted/40">
-      <div className="mx-auto flex min-h-screen w-full max-w-[430px] flex-col overflow-hidden bg-background md:max-w-none">
-        <div className="relative flex-1 overflow-y-auto">
+    <div className="min-h-screen bg-background md:bg-muted/30">
+      {!hideNav && <TopNav />}
+      <div className="mx-auto flex min-h-screen w-full max-w-[430px] flex-col overflow-hidden bg-background md:min-h-[calc(100vh-4rem)] md:max-w-7xl md:bg-transparent md:px-6 md:py-6">
+        <div className="relative flex-1 overflow-y-auto md:overflow-visible">
           <AnimatePresence mode="wait">
             <motion.div
               key={pathname}
