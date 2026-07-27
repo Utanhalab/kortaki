@@ -818,19 +818,11 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      can_manage_barber: {
-        Args: { _barber_id: string; _user_id: string }
-        Returns: boolean
-      }
       increment_booking_count: {
         Args: { photo_id: string }
         Returns: undefined
       }
       increment_view_count: { Args: { photo_id: string }; Returns: undefined }
-      is_shop_owner: {
-        Args: { _shop_id: number; _user_id: string }
-        Returns: boolean
-      }
     }
     Enums: {
       [_ in never]: never
