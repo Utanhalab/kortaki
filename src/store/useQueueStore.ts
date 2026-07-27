@@ -170,6 +170,9 @@ export const useQueueStore = create<QueueStore>((set, get) => ({
   async joinQueue({ shopId, serviceName, servicePrice, serviceDuration, barberName, notify, customerName }) {
     const clientId = getClientId();
     const name = customerName || getClientName();
+    const { data: authData } = await supabase.auth.getUser();
+    const uid = authData.user?.id;
+    if (!uid) throw new Error("Precisas de iniciar sessão para entrar na fila");
     const settings = await ensureSettings(shopId);
     if (!settings.is_open) throw new Error("A fila está em pausa");
 
@@ -186,6 +189,7 @@ export const useQueueStore = create<QueueStore>((set, get) => ({
       .insert({
         shop_id: shopId,
         client_id: clientId,
+        user_id: uid,
         customer_name: name,
         service_name: serviceName,
         service_price: servicePrice,
