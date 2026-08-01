@@ -116,6 +116,37 @@ export default function Booking() {
     const end = start + duration;
     return busy.some((r) => start < r.end && end > r.start);
   };
+  /** The overlapping busy range for a slot, if any. */
+  const busyAt = (t: string, nextDay: boolean) => {
+    const start = slotStart(t, nextDay);
+    if (start === null) return null;
+    const end = start + duration;
+    return busy.find((r) => start < r.end && end > r.start) ?? null;
+  };
+  /** The current user's own booking overlapping this slot (cancellable). */
+  const myBookingAt = (t: string, nextDay: boolean) => {
+    const start = slotStart(t, nextDay);
+    if (start === null) return null;
+    const end = start + duration;
+    return (
+      myBookings.find((b) => {
+        if (b.shopId !== shop!.id || b.status === "cancelled") return false;
+        const bs = new Date(`${b.date}T${b.time}:00`).getTime();
+        const be = bs + b.durationMinutes * 60000;
+        return start < be && end > bs;
+      }) ?? null
+    );
+  };
+  const cancelMine = async (bookingId: string) => {
+    setCancelling(bookingId);
+    const res = await cancelBooking(bookingId);
+    setCancelling(null);
+    if (res.error) { toast.error("Não foi possível cancelar"); return; }
+    toast.success("Reserva cancelada — slot libertado");
+    await loadBusy();
+  };
+
+
 
   const confirm = async () => {
     if (!canConfirm || !svc) return;
