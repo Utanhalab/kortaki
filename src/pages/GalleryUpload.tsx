@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { StepHint } from "@/components/StepGate";
 
 const TAG_OPTIONS = [
   "Cabelo curto",
@@ -164,12 +165,13 @@ export default function GalleryUpload() {
           <p className="text-center text-xs text-muted-foreground">
             📸 Usa boa iluminação para mais reservas
           </p>
+          <StepHint message={!file ? "Selecciona uma foto" : null} />
           <Button
             disabled={!file}
             onClick={() => setStep(2)}
-            className="w-full rounded-full bg-primary text-gold"
+            className="w-full rounded-full bg-primary text-gold disabled:opacity-50"
           >
-            Continuar
+            {!file ? "Selecciona uma foto" : "Continuar"}
           </Button>
         </section>
       )}
@@ -177,8 +179,8 @@ export default function GalleryUpload() {
       {step === 2 && (
         <section className="space-y-4 p-4">
           <div>
-            <label className="mb-2 block text-xs font-bold uppercase text-muted-foreground">
-              Categoria
+            <label className={cn("mb-2 block text-xs font-bold uppercase", !categoryId ? "text-primary" : "text-muted-foreground")}>
+              Categoria *
             </label>
             <div className="flex flex-wrap gap-2">
               {categories
@@ -201,8 +203,8 @@ export default function GalleryUpload() {
           </div>
 
           <div>
-            <label className="mb-1 block text-xs font-bold uppercase text-muted-foreground">
-              Nome do estilo
+            <label className={cn("mb-1 block text-xs font-bold uppercase", categoryId && !styleName ? "text-primary" : "text-muted-foreground")}>
+              Nome do estilo *
             </label>
             <Input
               maxLength={50}
@@ -257,6 +259,7 @@ export default function GalleryUpload() {
             />
           </div>
 
+          <StepHint message={!categoryId ? "Selecciona uma categoria" : !styleName ? "Indica o nome do estilo" : null} />
           <div className="flex gap-2">
             <Button onClick={() => setStep(1)} variant="outline" className="flex-1 rounded-full">
               Voltar
@@ -264,9 +267,9 @@ export default function GalleryUpload() {
             <Button
               disabled={!categoryId || !styleName}
               onClick={() => setStep(3)}
-              className="flex-1 rounded-full bg-primary text-gold"
+              className="flex-1 rounded-full bg-primary text-gold disabled:opacity-50"
             >
-              Pré-visualizar
+              {!categoryId ? "Selecciona uma categoria" : !styleName ? "Nome do estilo" : "Pré-visualizar"}
             </Button>
           </div>
         </section>

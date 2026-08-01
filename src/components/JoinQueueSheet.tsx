@@ -11,6 +11,7 @@ import { formatKz } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { getClientName, setClientName } from "@/lib/clientId";
+import { StepHint } from "@/components/StepGate";
 
 const iconMap = { Scissors, Sparkles, Wind, Flame, Crown };
 
@@ -51,6 +52,15 @@ export function JoinQueueSheet({
   const myPosition = queueCount + 1;
   const avg = settings?.avg_cut_minutes ?? 20;
   const estWait = queueCount * avg;
+
+  const stepMissing =
+    step === 0 && !serviceId
+      ? "Selecciona um serviço"
+      : step === 2 && !name.trim()
+        ? "Indica o teu nome"
+        : step === 2 && !isOpen
+          ? "A fila está em pausa"
+          : null;
 
   async function handleJoin() {
     if (!name.trim()) {
@@ -220,7 +230,9 @@ export function JoinQueueSheet({
           )}
         </div>
 
-        <div className="flex gap-2 border-t border-border bg-background p-3">
+        <div className="space-y-2 border-t border-border bg-background p-3">
+          <StepHint message={stepMissing} />
+          <div className="flex gap-2">
           {step > 0 && (
             <Button variant="outline" className="flex-1 rounded-full" onClick={() => setStep(step - 1)}>
               Voltar
@@ -228,20 +240,22 @@ export function JoinQueueSheet({
           )}
           {step < 2 ? (
             <Button
-              className="flex-1 rounded-full bg-primary text-gold hover:bg-primary/90"
+              disabled={!!stepMissing}
+              className="flex-1 rounded-full bg-primary text-gold hover:bg-primary/90 disabled:opacity-50"
               onClick={() => setStep(step + 1)}
             >
-              Continuar
+              {stepMissing ?? "Continuar"}
             </Button>
           ) : (
             <Button
-              disabled={busy || !isOpen}
+              disabled={busy || !isOpen || !name.trim()}
               onClick={handleJoin}
-              className="flex-1 rounded-full bg-primary font-display font-bold text-gold hover:bg-primary/90"
+              className="flex-1 rounded-full bg-primary font-display font-bold text-gold hover:bg-primary/90 disabled:opacity-50"
             >
-              {busy ? "A entrar..." : "Entrar na Fila"}
+              {busy ? "A entrar..." : stepMissing ?? "Entrar na Fila"}
             </Button>
           )}
+          </div>
         </div>
       </SheetContent>
     </Sheet>
