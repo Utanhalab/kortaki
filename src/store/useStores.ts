@@ -67,10 +67,15 @@ export type Booking = {
   date: string;
   time: string;
   price: number;
+  /** Service length in minutes; used for overlap checks. */
+  durationMinutes: number;
   status: "upcoming" | "past" | "cancelled";
 };
 
+export type BusyRange = { start: number; end: number; barber: string | null };
+
 type NewBooking = Omit<Booking, "id" | "status">;
+
 
 type BookingState = {
   selectedService: string | null;
