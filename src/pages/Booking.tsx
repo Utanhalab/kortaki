@@ -87,6 +87,21 @@ export default function Booking() {
   const isNextDaySlot = (t: string) => slots.find((s) => s.time === t)?.nextDay ?? false;
   const effectiveDate = selectedDate && isNextDaySlot(selectedTime ?? "") ? addDay(selectedDate) : selectedDate;
 
+  /** Absolute start of a slot, resolving overnight (+1 day) slots. */
+  const slotStart = (t: string, nextDay: boolean) => {
+    if (!selectedDate) return null;
+    const day = nextDay ? addDay(selectedDate) : selectedDate;
+    return new Date(`${day}T${t}:00`).getTime();
+  };
+  const duration = (svc?.duration ?? 30) * 60000;
+  /** A slot conflicts when its [start, start+duration) window overlaps an existing booking. */
+  const isTaken = (t: string, nextDay: boolean) => {
+    const start = slotStart(t, nextDay);
+    if (start === null) return false;
+    const end = start + duration;
+    return busy.some((r) => start < r.end && end > r.start);
+  };
+
   const confirm = async () => {
     if (!canConfirm || !svc) return;
     const res = await addBooking({
@@ -97,10 +112,20 @@ export default function Booking() {
       date: effectiveDate!,
       time: selectedTime!,
       price: svc.price,
+      durationMinutes: svc.duration,
     });
     if (res.error === "auth") {
       toast.error("Inicia sessão para reservar");
       navigate("/auth");
+      return;
+    }
+    if (res.error === "conflict") {
+      toast.error("Esse horário já foi reservado. Escolhe outro.");
+      setTime("");
+      if (shop && selectedDate) {
+        const from = new Date(`${selectedDate}T00:00:00`);
+        setBusy(await fetchShopBusyRanges(shop.id, from.toISOString(), new Date(from.getTime() + 48 * 3600000).toISOString()));
+      }
       return;
     }
     if (res.error) {
@@ -111,6 +136,7 @@ export default function Booking() {
     reset();
     navigate("/bookings");
   };
+
 
 
   return (
