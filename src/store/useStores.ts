@@ -93,7 +93,7 @@ type BookingState = {
   addBooking: (b: NewBooking) => Promise<{ error?: string }>;
   cancelBooking: (id: string) => Promise<{ error?: string }>;
   /** Busy ranges (epoch ms) for a shop within a window — used to block overlapping slots. */
-  fetchShopBusyRanges: (shopId: number, fromISO: string, toISO: string) => Promise<BusyRange[]>;
+  fetchShopBusyRanges: (shopId: number, fromISO: string, toISO: string) => Promise<{ ranges: BusyRange[]; error?: string }>;
 };
 
 const SELECT_COLS =
