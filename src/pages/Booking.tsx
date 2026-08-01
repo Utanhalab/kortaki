@@ -48,6 +48,13 @@ export default function Booking() {
   const days = next7Days();
   const svc = servicesCatalog.find((s) => s.id === selectedService);
   const canConfirm = !!(selectedService && selectedBarber && selectedDate && selectedTime);
+  const requirements: StepRequirement[] = [
+    { key: "service", message: "Selecciona um serviço", done: !!selectedService },
+    { key: "barber", message: "Selecciona um barbeiro", done: !!selectedBarber },
+    { key: "date", message: "Selecciona uma data", done: !!selectedDate },
+    { key: "time", message: "Selecciona uma hora", done: !!selectedTime },
+  ];
+  const missing = firstMissing(requirements);
 
   const confirm = async () => {
     if (!canConfirm || !svc) return;
