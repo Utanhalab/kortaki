@@ -25,7 +25,7 @@ export default function AdminOwners() {
       return;
     }
     (async () => {
-      const { data } = await supabase.rpc("has_role", { _user_id: user.id, _role: "admin" });
+      const { data } = await supabase.rpc("is_platform_admin");
       setIsAdmin(Boolean(data));
     })();
   }, [user, loading, navigate]);
