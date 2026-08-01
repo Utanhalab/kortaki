@@ -919,6 +919,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_platform_admin: { Args: never; Returns: boolean }
       shop_busy_ranges: {
         Args: { _from: string; _shop_id: number; _to: string }
         Returns: {
