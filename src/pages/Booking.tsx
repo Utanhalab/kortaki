@@ -1,16 +1,15 @@
-import { useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { ArrowLeft, Check } from "lucide-react";
 import { shops, servicesCatalog, shopDaySlots, isOvernight } from "@/data/shops";
 import { Button } from "@/components/ui/button";
-import { useBookingStore } from "@/store/useStores";
+import { useBookingStore, type BusyRange } from "@/store/useStores";
 import { useBarberStore } from "@/store/useBarberStore";
 import { formatKz } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { StepHeading, StepHint, StepSection, firstMissing, type StepRequirement } from "@/components/StepGate";
 
-const TAKEN = new Set(["10:00","11:30","15:00","17:30"]);
 
 function next7Days() {
   const days: { key: string; name: string; num: string }[] = [];
