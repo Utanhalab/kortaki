@@ -424,3 +424,7 @@ function Row({ k, v }: { k: string; v: string }) {
     </div>
   );
 }
+
+function fmtTime(ms: number) {
+  return new Date(ms).toLocaleTimeString("pt-PT", { hour: "2-digit", minute: "2-digit" });
+}
