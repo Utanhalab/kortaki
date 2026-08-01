@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { ArrowLeft, Check } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Check, Loader2, RefreshCw, X } from "lucide-react";
 import { shops, servicesCatalog, shopDaySlots, isOvernight } from "@/data/shops";
 import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useBookingStore, type BusyRange } from "@/store/useStores";
 import { useBarberStore } from "@/store/useBarberStore";
 import { formatKz } from "@/lib/format";
