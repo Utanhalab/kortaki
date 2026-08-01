@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { ArrowLeft, Check } from "lucide-react";
-import { shops, servicesCatalog } from "@/data/shops";
+import { shops, servicesCatalog, shopDaySlots } from "@/data/shops";
 import { Button } from "@/components/ui/button";
 import { useBookingStore } from "@/store/useStores";
 import { useBarberStore } from "@/store/useBarberStore";
@@ -10,7 +10,6 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { StepHeading, StepHint, StepSection, firstMissing, type StepRequirement } from "@/components/StepGate";
 
-const TIMES = ["09:00","09:30","10:00","10:30","11:00","11:30","14:00","14:30","15:00","15:30","16:00","16:30","17:00","17:30","18:00"];
 const TAKEN = new Set(["10:00","11:30","15:00","17:30"]);
 
 function next7Days() {
@@ -57,6 +56,7 @@ export default function Booking() {
   ];
   const missing = firstMissing(requirements);
 
+  const slots = shopDaySlots(shop);
   const todayKey = days[0].key;
   const now = new Date();
   const nowMinutes = now.getHours() * 60 + now.getMinutes();
@@ -204,16 +204,19 @@ export default function Booking() {
         <StepSection active={missing?.key === "time"}>
           <StepHeading index={4} title="Hora" active={missing?.key === "time"} done={!!selectedTime} />
           {missing?.key === "time" && <StepHint message="Selecciona uma hora" className="mb-2" />}
+          <div className="mb-2 text-[11px] text-muted-foreground">
+            Horário de funcionamento: {shop.opensAt} – {shop.closingTime}
+          </div>
           <div className="grid grid-cols-3 gap-2">
-            {TIMES.map((t) => {
+            {slots.map(({ time: t, working }) => {
               const past = isPastTime(t);
-              const taken = TAKEN.has(t) || past;
+              const taken = !working || TAKEN.has(t) || past;
               const sel = selectedTime === t;
               return (
                 <button
                   key={t}
                   disabled={taken}
-                  title={past ? "Horário já passou" : undefined}
+                  title={!working ? "Fora do horário de funcionamento" : past ? "Horário já passou" : undefined}
                   onClick={() => setTime(t)}
                   className={cn(
                     "rounded-xl border py-2.5 text-sm font-semibold transition-all",

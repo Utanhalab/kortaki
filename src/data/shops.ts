@@ -7,6 +7,9 @@ export type Shop = {
   status: "open" | "busy" | "closed";
   tier: "premium" | "default" | "budget";
   closesAt: string;
+  /** Working range defined when the barbershop is created (24h "HH:MM"). May wrap past midnight. */
+  opensAt: string;
+  closingTime: string;
   services: string[];
   price: number;
   address: string;
@@ -15,14 +18,43 @@ export type Shop = {
 };
 
 export const shops: Shop[] = [
-  { id: 1, name: "Kaleba Luxury Barbers", dist: 0.3, rating: 4.9, reviews: 312, status: "open", tier: "premium", closesAt: "21:00", services: ["Fade","Beard","Hot Towel","Package"], price: 6000, address: "Rua Rainha Ginga, Ingombota", lat: -8.8147, lng: 13.2302 },
-  { id: 2, name: "Dom Barbeiro", dist: 0.6, rating: 4.7, reviews: 148, status: "open", tier: "premium", closesAt: "21:00", services: ["Fade","Beard","Hot Towel"], price: 4000, address: "Av. 4 de Fevereiro, Luanda", lat: -8.8190, lng: 13.2350 },
-  { id: 3, name: "Barbearia Kwanza", dist: 0.9, rating: 4.5, reviews: 97, status: "open", tier: "default", closesAt: "20:00", services: ["Haircut","Shave","Kids"], price: 2500, address: "Bairro Sambizanga, Luanda", lat: -8.8060, lng: 13.2380 },
-  { id: 4, name: "Sharp Cuts Studio", dist: 1.3, rating: 4.8, reviews: 203, status: "busy", tier: "premium", closesAt: "22:00", services: ["Braids","Fades","Dreads"], price: 5000, address: "Talatona, Luanda Sul", lat: -8.9180, lng: 13.1800 },
-  { id: 5, name: "Barbearia Popular", dist: 1.8, rating: 4.2, reviews: 56, status: "open", tier: "budget", closesAt: "18:00", services: ["Classic","Kids","Shave"], price: 1800, address: "Rangel, Luanda", lat: -8.8290, lng: 13.2460 },
-  { id: 6, name: "Metro Barbers", dist: 2.1, rating: 4.6, reviews: 179, status: "open", tier: "default", closesAt: "21:30", services: ["Fade","Beard","Scalp"], price: 3200, address: "Maianga, Luanda", lat: -8.8240, lng: 13.2280 },
-  { id: 7, name: "Le Barber Prestige", dist: 2.8, rating: 4.9, reviews: 89, status: "closed", tier: "premium", closesAt: "Opens 09:00", services: ["Luxury","Grooming","Package"], price: 8000, address: "Miramar, Luanda", lat: -8.8100, lng: 13.2210 },
+  { id: 1, name: "Kaleba Luxury Barbers", dist: 0.3, rating: 4.9, reviews: 312, status: "open", tier: "premium", closesAt: "21:00", services: ["Fade","Beard","Hot Towel","Package"], price: 6000, address: "Rua Rainha Ginga, Ingombota", lat: -8.8147, lng: 13.2302, opensAt: "09:00", closingTime: "21:00" },
+  { id: 2, name: "Dom Barbeiro", dist: 0.6, rating: 4.7, reviews: 148, status: "open", tier: "premium", closesAt: "21:00", services: ["Fade","Beard","Hot Towel"], price: 4000, address: "Av. 4 de Fevereiro, Luanda", lat: -8.8190, lng: 13.2350, opensAt: "09:00", closingTime: "21:00" },
+  { id: 3, name: "Barbearia Kwanza", dist: 0.9, rating: 4.5, reviews: 97, status: "open", tier: "default", closesAt: "20:00", services: ["Haircut","Shave","Kids"], price: 2500, address: "Bairro Sambizanga, Luanda", lat: -8.8060, lng: 13.2380, opensAt: "08:00", closingTime: "20:00" },
+  { id: 4, name: "Sharp Cuts Studio", dist: 1.3, rating: 4.8, reviews: 203, status: "busy", tier: "premium", closesAt: "22:00", services: ["Braids","Fades","Dreads"], price: 5000, address: "Talatona, Luanda Sul", lat: -8.9180, lng: 13.1800, opensAt: "10:00", closingTime: "22:00" },
+  { id: 5, name: "Barbearia Popular", dist: 1.8, rating: 4.2, reviews: 56, status: "open", tier: "budget", closesAt: "18:00", services: ["Classic","Kids","Shave"], price: 1800, address: "Rangel, Luanda", lat: -8.8290, lng: 13.2460, opensAt: "08:30", closingTime: "18:00" },
+  { id: 6, name: "Metro Barbers", dist: 2.1, rating: 4.6, reviews: 179, status: "open", tier: "default", closesAt: "21:30", services: ["Fade","Beard","Scalp"], price: 3200, address: "Maianga, Luanda", lat: -8.8240, lng: 13.2280, opensAt: "09:00", closingTime: "21:30" },
+  { id: 7, name: "Le Barber Prestige", dist: 2.8, rating: 4.9, reviews: 89, status: "closed", tier: "premium", closesAt: "Opens 09:00", services: ["Luxury","Grooming","Package"], price: 8000, address: "Miramar, Luanda", lat: -8.8100, lng: 13.2210, opensAt: "09:00", closingTime: "19:00" },
 ];
+
+/** Slot step in minutes for the 24h booking grid. */
+export const SLOT_STEP_MINUTES = 30;
+
+const toMinutes = (t: string) => {
+  const [h, m] = t.split(":").map(Number);
+  return h * 60 + m;
+};
+
+export const formatSlot = (mins: number) => {
+  const m = ((mins % 1440) + 1440) % 1440;
+  return `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
+};
+
+/** Full 24h grid, in slot-step increments. */
+export const allDaySlots = (step = SLOT_STEP_MINUTES): string[] =>
+  Array.from({ length: Math.floor(1440 / step) }, (_, i) => formatSlot(i * step));
+
+/** True when the slot falls inside the shop's working range (handles ranges crossing midnight). */
+export const isWithinWorkingHours = (shop: Pick<Shop, "opensAt" | "closingTime">, time: string) => {
+  const open = toMinutes(shop.opensAt);
+  const close = toMinutes(shop.closingTime);
+  const t = toMinutes(time);
+  return close > open ? t >= open && t < close : t >= open || t < close;
+};
+
+/** 24h grid for a shop, flagging which slots are inside its working range. */
+export const shopDaySlots = (shop: Pick<Shop, "opensAt" | "closingTime">, step = SLOT_STEP_MINUTES) =>
+  allDaySlots(step).map((time) => ({ time, working: isWithinWorkingHours(shop, time) }));
 
 export const barbers = [
   { id: 1, name: "João Silva", specialty: "Fades", rating: 4.9, available: true },
