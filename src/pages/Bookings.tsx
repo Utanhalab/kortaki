@@ -1,4 +1,6 @@
+import { useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useAuth } from "@/lib/auth";
 import { useBookingStore } from "@/store/useStores";
 import { useQueueStore } from "@/store/useQueueStore";
 import { Button } from "@/components/ui/button";
@@ -9,8 +11,10 @@ import { Link } from "react-router-dom";
 import { shops } from "@/data/shops";
 
 export default function Bookings() {
-  const { bookings, cancelBooking } = useBookingStore();
+  const { bookings, cancelBooking, fetchBookings, loading } = useBookingStore();
+  const { user } = useAuth();
   const { myEntries, leaveQueue } = useQueueStore();
+  useEffect(() => { fetchBookings(); }, [fetchBookings, user?.id]);
   const upcoming = bookings.filter((b) => b.status === "upcoming");
   const past = bookings.filter((b) => b.status === "past");
   const cancelled = bookings.filter((b) => b.status === "cancelled");
