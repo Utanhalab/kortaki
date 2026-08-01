@@ -355,8 +355,8 @@ export const useGalleryStore = create<GalleryStore>((set, get) => ({
     });
   },
 
-  async incrementView(photoId) {
-    await supabase.rpc("increment_view_count" as any, { photo_id: photoId });
+  async incrementView(_photoId) {
+    // View counting is handled server-side; no privileged RPC is exposed to clients.
   },
 
   async uploadStyle(barberId, file, meta) {
