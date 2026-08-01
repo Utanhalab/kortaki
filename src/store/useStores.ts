@@ -165,12 +165,13 @@ export const useBookingStore = create<BookingState>((set, get) => ({
       _from: fromISO,
       _to: toISO,
     });
-    if (error || !data) return [];
-    return (data as { starts_at: string; ends_at: string; barber_name: string | null }[]).map((r) => ({
+    if (error) return { ranges: [], error: error.message };
+    const ranges = ((data ?? []) as { starts_at: string; ends_at: string; barber_name: string | null }[]).map((r) => ({
       start: new Date(r.starts_at).getTime(),
       end: new Date(r.ends_at).getTime(),
       barber: r.barber_name,
     }));
+    return { ranges };
   },
 
   addBooking: async (b) => {
