@@ -43,6 +43,20 @@ export default function Booking() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Busy ranges for the selected day (+ the overnight tail into the next day)
+  const fetchShopBusyRanges = useBookingStore((s) => s.fetchShopBusyRanges);
+  const [busy, setBusy] = useState<BusyRange[]>([]);
+  const shopId = shop?.id;
+  useEffect(() => {
+    if (!shopId || !selectedDate) { setBusy([]); return; }
+    let alive = true;
+    const from = new Date(`${selectedDate}T00:00:00`);
+    const to = new Date(from.getTime() + 48 * 60 * 60 * 1000);
+    fetchShopBusyRanges(shopId, from.toISOString(), to.toISOString()).then((r) => { if (alive) setBusy(r); });
+    return () => { alive = false; };
+  }, [shopId, selectedDate, fetchShopBusyRanges]);
+
+
   if (!shop) return null;
   const days = next7Days();
   const svc = servicesCatalog.find((s) => s.id === selectedService);
