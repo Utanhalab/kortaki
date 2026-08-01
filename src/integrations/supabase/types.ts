@@ -818,11 +818,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      increment_booking_count: {
-        Args: { photo_id: string }
-        Returns: undefined
-      }
-      increment_view_count: { Args: { photo_id: string }; Returns: undefined }
+      [_ in never]: never
     }
     Enums: {
       [_ in never]: never
