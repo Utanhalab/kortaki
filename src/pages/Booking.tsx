@@ -60,11 +60,19 @@ export default function Booking() {
   const todayKey = days[0].key;
   const now = new Date();
   const nowMinutes = now.getHours() * 60 + now.getMinutes();
-  const isPastTime = (t: string) => {
+  const isPastTime = (t: string, nextDay: boolean) => {
+    if (nextDay) return false; // belongs to the following calendar day
     if (selectedDate !== todayKey) return false;
     const [h, m] = t.split(":").map(Number);
     return h * 60 + m <= nowMinutes;
   };
+  const addDay = (key: string) => {
+    const d = new Date(`${key}T00:00:00`);
+    d.setDate(d.getDate() + 1);
+    return d.toISOString().slice(0, 10);
+  };
+  const isNextDaySlot = (t: string) => slots.find((s) => s.time === t)?.nextDay ?? false;
+  const effectiveDate = selectedDate && isNextDaySlot(selectedTime ?? "") ? addDay(selectedDate) : selectedDate;
 
   const confirm = async () => {
     if (!canConfirm || !svc) return;
@@ -73,7 +81,7 @@ export default function Booking() {
       shopName: shop.name,
       service: svc.name,
       barber: selectedBarber!,
-      date: selectedDate!,
+      date: effectiveDate!,
       time: selectedTime!,
       price: svc.price,
     });
@@ -90,6 +98,7 @@ export default function Booking() {
     reset();
     navigate("/bookings");
   };
+
 
   return (
     <div className="flex flex-col pb-32">
