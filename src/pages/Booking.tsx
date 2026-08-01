@@ -8,6 +8,7 @@ import { useBarberStore } from "@/store/useBarberStore";
 import { formatKz } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { StepHeading, StepHint, StepSection, firstMissing, type StepRequirement } from "@/components/StepGate";
 
 const TIMES = ["09:00","09:30","10:00","10:30","11:00","11:30","14:00","14:30","15:00","15:30","16:00","16:30","17:00","17:30","18:00"];
 const TAKEN = new Set(["10:00","11:30","15:00","17:30"]);
@@ -95,8 +96,9 @@ export default function Booking() {
 
       <div className="space-y-6 p-4">
         {/* Service */}
-        <section>
-          <h2 className="mb-2 font-display text-sm font-bold uppercase tracking-wider text-muted-foreground">1. Serviço</h2>
+        <StepSection active={missing?.key === "service"}>
+          <StepHeading index={1} title="Serviço" active={missing?.key === "service"} done={!!selectedService} />
+          {missing?.key === "service" && <StepHint message="Selecciona um serviço" className="mb-2" />}
           <div className="space-y-2">
             {servicesCatalog.map((s) => (
               <button
@@ -118,11 +120,12 @@ export default function Booking() {
               </button>
             ))}
           </div>
-        </section>
+        </StepSection>
 
         {/* Barber */}
-        <section>
-          <h2 className="mb-2 font-display text-sm font-bold uppercase tracking-wider text-muted-foreground">2. Barbeiro</h2>
+        <StepSection active={missing?.key === "barber"}>
+          <StepHeading index={2} title="Barbeiro" active={missing?.key === "barber"} done={!!selectedBarber} />
+          {missing?.key === "barber" && <StepHint message="Selecciona um barbeiro" className="mb-2" />}
           <div className="no-scrollbar -mx-4 flex gap-3 overflow-x-auto px-4">
             <button
               onClick={() => setBarber("Qualquer disponível")}
@@ -159,11 +162,12 @@ export default function Booking() {
               </button>
             ))}
           </div>
-        </section>
+        </StepSection>
 
         {/* Date */}
-        <section>
-          <h2 className="mb-2 font-display text-sm font-bold uppercase tracking-wider text-muted-foreground">3. Data</h2>
+        <StepSection active={missing?.key === "date"}>
+          <StepHeading index={3} title="Data" active={missing?.key === "date"} done={!!selectedDate} />
+          {missing?.key === "date" && <StepHint message="Selecciona uma data" className="mb-2" />}
           <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4">
             {days.map((d) => (
               <button
@@ -179,11 +183,12 @@ export default function Booking() {
               </button>
             ))}
           </div>
-        </section>
+        </StepSection>
 
         {/* Time */}
-        <section>
-          <h2 className="mb-2 font-display text-sm font-bold uppercase tracking-wider text-muted-foreground">4. Hora</h2>
+        <StepSection active={missing?.key === "time"}>
+          <StepHeading index={4} title="Hora" active={missing?.key === "time"} done={!!selectedTime} />
+          {missing?.key === "time" && <StepHint message="Selecciona uma hora" className="mb-2" />}
           <div className="grid grid-cols-3 gap-2">
             {TIMES.map((t) => {
               const taken = TAKEN.has(t);
@@ -205,7 +210,7 @@ export default function Booking() {
               );
             })}
           </div>
-        </section>
+        </StepSection>
 
         {/* Summary */}
         {canConfirm && svc && (
@@ -227,12 +232,13 @@ export default function Booking() {
       </div>
 
       <div className="fixed bottom-[max(4.5rem,calc(env(safe-area-inset-bottom)+4rem))] left-1/2 z-40 w-full max-w-[430px] -translate-x-1/2 px-4">
+        <StepHint message={missing?.message} className="mb-2 shadow-lg" />
         <Button
           onClick={confirm}
           disabled={!canConfirm}
           className="h-14 w-full rounded-2xl bg-primary font-display text-base font-bold text-gold shadow-xl hover:bg-primary/90 disabled:opacity-50"
         >
-          Confirmar Reserva
+          {missing ? missing.message : "Confirmar Reserva"}
         </Button>
       </div>
     </div>
