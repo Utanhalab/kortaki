@@ -215,29 +215,32 @@ export default function Booking() {
           {missing?.key === "time" && <StepHint message="Selecciona uma hora" className="mb-2" />}
           <div className="mb-2 text-[11px] text-muted-foreground">
             Horário de funcionamento: {shop.opensAt} – {shop.closingTime}
+            {isOvernight(shop) && " (fecha no dia seguinte)"}
           </div>
           <div className="grid grid-cols-3 gap-2">
-            {slots.map(({ time: t, working }) => {
-              const past = isPastTime(t);
+            {slots.map(({ time: t, working, nextDay }) => {
+              const past = isPastTime(t, nextDay);
               const taken = !working || TAKEN.has(t) || past;
               const sel = selectedTime === t;
               return (
                 <button
                   key={t}
                   disabled={taken}
-                  title={!working ? "Fora do horário de funcionamento" : past ? "Horário já passou" : undefined}
+                  title={!working ? "Fora do horário de funcionamento" : past ? "Horário já passou" : nextDay ? "Dia seguinte" : undefined}
                   onClick={() => setTime(t)}
                   className={cn(
-                    "rounded-xl border py-2.5 text-sm font-semibold transition-all",
+                    "relative rounded-xl border py-2.5 text-sm font-semibold transition-all",
                     taken && "border-border bg-muted text-muted-foreground line-through opacity-50",
                     !taken && sel && "border-gold bg-primary text-gold",
                     !taken && !sel && "border-border bg-card hover:bg-muted",
                   )}
                 >
                   {t}
+                  {nextDay && working && <span className="ml-1 align-super text-[9px]">+1</span>}
                 </button>
               );
             })}
+
           </div>
         </StepSection>
 
