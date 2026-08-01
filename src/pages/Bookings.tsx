@@ -74,8 +74,15 @@ export default function Bookings() {
         </TabsContent>
 
         <TabsContent value="upcoming" className="mt-4 space-y-3">
-          {upcoming.length === 0 ? <Empty /> : upcoming.map((b) => (
-            <BookingCard key={b.id} b={b} onCancel={() => { cancelBooking(b.id); toast("Reserva cancelada"); }} />
+          {loading ? (
+            <div className="h-28 animate-pulse rounded-2xl bg-muted" />
+          ) : !user ? (
+            <Empty label="Inicia sessão para ver as tuas reservas" />
+          ) : upcoming.length === 0 ? <Empty /> : upcoming.map((b) => (
+            <BookingCard key={b.id} b={b} onCancel={async () => {
+              const r = await cancelBooking(b.id);
+              r.error ? toast.error("Não foi possível cancelar") : toast("Reserva cancelada");
+            }} />
           ))}
         </TabsContent>
         <TabsContent value="past" className="mt-4 space-y-3">
