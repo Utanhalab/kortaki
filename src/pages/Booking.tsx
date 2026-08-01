@@ -267,33 +267,88 @@ export default function Booking() {
             Horário de funcionamento: {shop.opensAt} – {shop.closingTime}
             {isOvernight(shop) && " (fecha no dia seguinte)"}
           </div>
-          <div className="grid grid-cols-3 gap-2">
-            {slots.map(({ time: t, working, nextDay }) => {
-              const past = isPastTime(t, nextDay);
-              const booked = working && !past && isTaken(t, nextDay);
-              const taken = !working || booked || past;
-              const sel = selectedTime === t;
-              return (
-                <button
-                  key={t}
-                  disabled={taken}
-                  title={!working ? "Fora do horário de funcionamento" : past ? "Horário já passou" : booked ? "Já reservado" : nextDay ? "Dia seguinte" : undefined}
+          {busyLoading ? (
+            <div className="grid grid-cols-3 gap-2">
+              {Array.from({ length: 12 }).map((_, i) => (
+                <div key={i} className="h-11 animate-pulse rounded-xl bg-muted" />
+              ))}
+            </div>
+          ) : busyError ? (
+            <div className="flex flex-col items-center gap-2 rounded-2xl border border-destructive/40 bg-destructive/5 p-4 text-center">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+              <p className="text-xs text-muted-foreground">Não foi possível carregar a disponibilidade.</p>
+              <Button size="sm" variant="outline" className="rounded-full" onClick={() => loadBusy()}>
+                <RefreshCw className="mr-1.5 h-3.5 w-3.5" /> Tentar novamente
+              </Button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-3 gap-2">
+              {slots.map(({ time: t, working, nextDay }) => {
+                const past = isPastTime(t, nextDay);
+                const booked = working && !past && isTaken(t, nextDay);
+                const taken = !working || booked || past;
+                const sel = selectedTime === t;
+                const mine = booked ? myBookingAt(t, nextDay) : null;
+                const range = booked ? busyAt(t, nextDay) : null;
+                const cls = cn(
+                  "relative w-full rounded-xl border py-2.5 text-sm font-semibold transition-all",
+                  taken && "border-border bg-muted text-muted-foreground line-through opacity-50",
+                  booked && "cursor-pointer opacity-70 line-through",
+                  !taken && sel && "border-gold bg-primary text-gold",
+                  !taken && !sel && "border-border bg-card hover:bg-muted",
+                );
+                const label = (
+                  <>
+                    {t}
+                    {nextDay && working && <span className="ml-1 align-super text-[9px]">+1</span>}
+                  </>
+                );
 
-                  onClick={() => setTime(t)}
-                  className={cn(
-                    "relative rounded-xl border py-2.5 text-sm font-semibold transition-all",
-                    taken && "border-border bg-muted text-muted-foreground line-through opacity-50",
-                    !taken && sel && "border-gold bg-primary text-gold",
-                    !taken && !sel && "border-border bg-card hover:bg-muted",
-                  )}
-                >
-                  {t}
-                  {nextDay && working && <span className="ml-1 align-super text-[9px]">+1</span>}
-                </button>
-              );
-            })}
+                if (booked && range) {
+                  return (
+                    <Popover key={t}>
+                      <PopoverTrigger asChild>
+                        <button type="button" className={cls} title="Já reservado — ver detalhes">{label}</button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-60 rounded-2xl p-3 text-xs" align="center">
+                        <p className="font-display text-sm font-bold">Slot reservado</p>
+                        <div className="mt-2 space-y-1">
+                          <Row k="Horário" v={`${fmtTime(range.start)} – ${fmtTime(range.end)}`} />
+                          <Row k="Barbeiro" v={range.barber ?? "Qualquer disponível"} />
+                          {mine && <Row k="Serviço" v={mine.service} />}
+                          <Row k="Reserva" v={mine ? "Tua reserva" : "De outro cliente"} />
+                        </div>
+                        {mine && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={cancelling === mine.id}
+                            onClick={() => cancelMine(mine.id)}
+                            className="mt-3 w-full rounded-full border-destructive/40 text-destructive"
+                          >
+                            {cancelling === mine.id ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <X className="mr-1.5 h-3.5 w-3.5" />}
+                            Cancelar e libertar slot
+                          </Button>
+                        )}
+                      </PopoverContent>
+                    </Popover>
+                  );
+                }
 
-          </div>
+                return (
+                  <button
+                    key={t}
+                    disabled={taken}
+                    title={!working ? "Fora do horário de funcionamento" : past ? "Horário já passou" : nextDay ? "Dia seguinte" : undefined}
+                    onClick={() => setTime(t)}
+                    className={cls}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </StepSection>
 
         {/* Summary */}
