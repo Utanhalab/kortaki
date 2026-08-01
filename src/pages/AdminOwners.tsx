@@ -17,6 +17,17 @@ export default function AdminOwners() {
   const [shopId, setShopId] = useState<number>(shops[0]?.id ?? 1);
   const [busy, setBusy] = useState(false);
   const [counts, setCounts] = useState<Record<number, number>>({});
+  const [query, setQuery] = useState("");
+
+  const q = query.trim().toLowerCase();
+  const visibleShops = q
+    ? shops.filter(
+        (s) =>
+          s.name.toLowerCase().includes(q) ||
+          rows.some((r) => r.shop_id === s.id && r.email.toLowerCase().includes(q)),
+      )
+    : shops;
+
 
   useEffect(() => {
     if (loading) return;
