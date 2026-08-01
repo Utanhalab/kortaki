@@ -17,10 +17,11 @@ type ShopState = {
   setSearch: (s: string) => void;
   setSort: (s: SortKey) => void;
   setView: (v: ViewMode) => void;
-  toggleSave: (id: number) => void;
+  fetchSaved: () => Promise<void>;
+  toggleSave: (id: number) => Promise<{ error?: string }>;
 };
 
-export const useShopStore = create<ShopState>((set) => ({
+export const useShopStore = create<ShopState>((set, get) => ({
   shops: initialShops,
   filter: "all",
   search: "",
@@ -31,10 +32,30 @@ export const useShopStore = create<ShopState>((set) => ({
   setSearch: (search) => set({ search }),
   setSort: (sort) => set({ sort }),
   setView: (view) => set({ view }),
-  toggleSave: (id) =>
-    set((s) => ({
-      saved: s.saved.includes(id) ? s.saved.filter((x) => x !== id) : [...s.saved, id],
-    })),
+
+  fetchSaved: async () => {
+    const { data: auth } = await supabase.auth.getUser();
+    if (!auth.user) { set({ saved: [] }); return; }
+    const { data, error } = await supabase
+      .from("saved_shops")
+      .select("shop_id")
+      .eq("user_id", auth.user.id)
+      .order("saved_at", { ascending: false });
+    if (!error && data) set({ saved: data.map((r) => r.shop_id) });
+  },
+
+  toggleSave: async (id) => {
+    const { data: auth } = await supabase.auth.getUser();
+    if (!auth.user) return { error: "auth" };
+    const prev = get().saved;
+    const isSaved = prev.includes(id);
+    set({ saved: isSaved ? prev.filter((x) => x !== id) : [...prev, id] });
+    const { error } = isSaved
+      ? await supabase.from("saved_shops").delete().eq("user_id", auth.user.id).eq("shop_id", id)
+      : await supabase.from("saved_shops").insert({ user_id: auth.user.id, shop_id: id });
+    if (error) { set({ saved: prev }); return { error: error.message }; }
+    return {};
+  },
 }));
 
 export type Booking = {

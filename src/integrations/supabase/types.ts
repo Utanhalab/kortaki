@@ -608,6 +608,24 @@ export type Database = {
           },
         ]
       }
+      saved_shops: {
+        Row: {
+          saved_at: string
+          shop_id: number
+          user_id: string
+        }
+        Insert: {
+          saved_at?: string
+          shop_id: number
+          user_id: string
+        }
+        Update: {
+          saved_at?: string
+          shop_id?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       saved_styles: {
         Row: {
           saved_at: string
