@@ -57,6 +57,20 @@ export default function Booking() {
   ];
   const missing = firstMissing(requirements);
 
+  const todayKey = days[0].key;
+  const now = new Date();
+  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+  const isPastTime = (t: string) => {
+    if (selectedDate !== todayKey) return false;
+    const [h, m] = t.split(":").map(Number);
+    return h * 60 + m <= nowMinutes;
+  };
+
+  useEffect(() => {
+    if (selectedTime && isPastTime(selectedTime)) setTime("");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedDate]);
+
   const confirm = async () => {
     if (!canConfirm || !svc) return;
     const res = await addBooking({
@@ -191,12 +205,14 @@ export default function Booking() {
           {missing?.key === "time" && <StepHint message="Selecciona uma hora" className="mb-2" />}
           <div className="grid grid-cols-3 gap-2">
             {TIMES.map((t) => {
-              const taken = TAKEN.has(t);
+              const past = isPastTime(t);
+              const taken = TAKEN.has(t) || past;
               const sel = selectedTime === t;
               return (
                 <button
                   key={t}
                   disabled={taken}
+                  title={past ? "Horário já passou" : undefined}
                   onClick={() => setTime(t)}
                   className={cn(
                     "rounded-xl border py-2.5 text-sm font-semibold transition-all",
