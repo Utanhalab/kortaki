@@ -92,20 +92,12 @@ type BookingState = {
   fetchBookings: () => Promise<void>;
   addBooking: (b: NewBooking) => Promise<{ error?: string }>;
   cancelBooking: (id: string) => Promise<{ error?: string }>;
+  /** Busy ranges (epoch ms) for a shop within a window — used to block overlapping slots. */
+  fetchShopBusyRanges: (shopId: number, fromISO: string, toISO: string) => Promise<BusyRange[]>;
 };
 
-function toRow(b: NewBooking, userId: string) {
-  return {
-    user_id: userId,
-    shop_id: b.shopId,
-    shop_name: b.shopName,
-    service_name: b.service,
-    barber_name: b.barber,
-    appointment_at: new Date(`${b.date}T${b.time}:00`).toISOString(),
-    price: b.price,
-    status: "upcoming",
-  };
-}
+const SELECT_COLS =
+  "id, shop_id, shop_name, service_name, barber_name, appointment_at, duration_minutes, price, status";
 
 type Row = {
   id: string;
@@ -114,9 +106,11 @@ type Row = {
   service_name: string;
   barber_name: string | null;
   appointment_at: string;
+  duration_minutes: number | null;
   price: number;
   status: string;
 };
+
 
 function fromRow(r: Row): Booking {
   const d = new Date(r.appointment_at);
