@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { ArrowLeft, Check } from "lucide-react";
-import { shops, servicesCatalog, shopDaySlots } from "@/data/shops";
+import { shops, servicesCatalog, shopDaySlots, isOvernight } from "@/data/shops";
 import { Button } from "@/components/ui/button";
 import { useBookingStore } from "@/store/useStores";
 import { useBarberStore } from "@/store/useBarberStore";
@@ -60,11 +60,19 @@ export default function Booking() {
   const todayKey = days[0].key;
   const now = new Date();
   const nowMinutes = now.getHours() * 60 + now.getMinutes();
-  const isPastTime = (t: string) => {
+  const isPastTime = (t: string, nextDay: boolean) => {
+    if (nextDay) return false; // belongs to the following calendar day
     if (selectedDate !== todayKey) return false;
     const [h, m] = t.split(":").map(Number);
     return h * 60 + m <= nowMinutes;
   };
+  const addDay = (key: string) => {
+    const d = new Date(`${key}T00:00:00`);
+    d.setDate(d.getDate() + 1);
+    return d.toISOString().slice(0, 10);
+  };
+  const isNextDaySlot = (t: string) => slots.find((s) => s.time === t)?.nextDay ?? false;
+  const effectiveDate = selectedDate && isNextDaySlot(selectedTime ?? "") ? addDay(selectedDate) : selectedDate;
 
   const confirm = async () => {
     if (!canConfirm || !svc) return;
@@ -73,7 +81,7 @@ export default function Booking() {
       shopName: shop.name,
       service: svc.name,
       barber: selectedBarber!,
-      date: selectedDate!,
+      date: effectiveDate!,
       time: selectedTime!,
       price: svc.price,
     });
@@ -90,6 +98,7 @@ export default function Booking() {
     reset();
     navigate("/bookings");
   };
+
 
   return (
     <div className="flex flex-col pb-32">
@@ -206,29 +215,32 @@ export default function Booking() {
           {missing?.key === "time" && <StepHint message="Selecciona uma hora" className="mb-2" />}
           <div className="mb-2 text-[11px] text-muted-foreground">
             Horário de funcionamento: {shop.opensAt} – {shop.closingTime}
+            {isOvernight(shop) && " (fecha no dia seguinte)"}
           </div>
           <div className="grid grid-cols-3 gap-2">
-            {slots.map(({ time: t, working }) => {
-              const past = isPastTime(t);
+            {slots.map(({ time: t, working, nextDay }) => {
+              const past = isPastTime(t, nextDay);
               const taken = !working || TAKEN.has(t) || past;
               const sel = selectedTime === t;
               return (
                 <button
                   key={t}
                   disabled={taken}
-                  title={!working ? "Fora do horário de funcionamento" : past ? "Horário já passou" : undefined}
+                  title={!working ? "Fora do horário de funcionamento" : past ? "Horário já passou" : nextDay ? "Dia seguinte" : undefined}
                   onClick={() => setTime(t)}
                   className={cn(
-                    "rounded-xl border py-2.5 text-sm font-semibold transition-all",
+                    "relative rounded-xl border py-2.5 text-sm font-semibold transition-all",
                     taken && "border-border bg-muted text-muted-foreground line-through opacity-50",
                     !taken && sel && "border-gold bg-primary text-gold",
                     !taken && !sel && "border-border bg-card hover:bg-muted",
                   )}
                 >
                   {t}
+                  {nextDay && working && <span className="ml-1 align-super text-[9px]">+1</span>}
                 </button>
               );
             })}
+
           </div>
         </StepSection>
 
@@ -240,7 +252,7 @@ export default function Booking() {
               <Row k="Barbearia" v={shop.name} />
               <Row k="Serviço" v={svc.name} />
               <Row k="Barbeiro" v={selectedBarber!} />
-              <Row k="Data" v={selectedDate!} />
+              <Row k="Data" v={effectiveDate!} />
               <Row k="Hora" v={selectedTime!} />
               <div className="mt-2 flex justify-between border-t border-gold/30 pt-2">
                 <span className="font-semibold">Total</span>

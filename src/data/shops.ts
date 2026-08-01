@@ -44,17 +44,50 @@ export const formatSlot = (mins: number) => {
 export const allDaySlots = (step = SLOT_STEP_MINUTES): string[] =>
   Array.from({ length: Math.floor(1440 / step) }, (_, i) => formatSlot(i * step));
 
+/** True when the shift crosses midnight (e.g. 20:00 → 04:00). */
+export const isOvernight = (shop: Pick<Shop, "opensAt" | "closingTime">) =>
+  toMinutes(shop.closingTime) <= toMinutes(shop.opensAt);
+
 /** True when the slot falls inside the shop's working range (handles ranges crossing midnight). */
 export const isWithinWorkingHours = (shop: Pick<Shop, "opensAt" | "closingTime">, time: string) => {
   const open = toMinutes(shop.opensAt);
   const close = toMinutes(shop.closingTime);
   const t = toMinutes(time);
+  if (close === open) return true; // 24h operation
   return close > open ? t >= open && t < close : t >= open || t < close;
 };
 
-/** 24h grid for a shop, flagging which slots are inside its working range. */
-export const shopDaySlots = (shop: Pick<Shop, "opensAt" | "closingTime">, step = SLOT_STEP_MINUTES) =>
-  allDaySlots(step).map((time) => ({ time, working: isWithinWorkingHours(shop, time) }));
+export type DaySlot = {
+  time: string;
+  /** Inside the shop's working range. */
+  working: boolean;
+  /** Slot belongs to the calendar day after the selected date (overnight shift tail). */
+  nextDay: boolean;
+};
+
+/**
+ * 24h grid for a shop. For overnight shifts the grid is rotated to start at `opensAt`
+ * so the shift reads chronologically, and post-midnight slots are flagged `nextDay`.
+ */
+export const shopDaySlots = (
+  shop: Pick<Shop, "opensAt" | "closingTime">,
+  step = SLOT_STEP_MINUTES,
+): DaySlot[] => {
+  const open = toMinutes(shop.opensAt);
+  const overnight = isOvernight(shop) && toMinutes(shop.closingTime) !== open;
+  const count = Math.floor(1440 / step);
+  const offset = overnight ? Math.floor(open / step) : 0;
+  return Array.from({ length: count }, (_, i) => {
+    const mins = ((i + offset) % count) * step;
+    const time = formatSlot(mins);
+    return {
+      time,
+      working: isWithinWorkingHours(shop, time),
+      nextDay: overnight && mins < open,
+    };
+  });
+};
+
 
 export const barbers = [
   { id: 1, name: "João Silva", specialty: "Fades", rating: 4.9, available: true },
