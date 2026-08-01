@@ -94,7 +94,7 @@ export function StepSection({
     <section
       className={cn(
         "scroll-mt-24 rounded-2xl transition-all",
-        active && "-mx-2 animate-pulse-once bg-gold/5 px-2 py-2 ring-2 ring-gold/40",
+        active && "-mx-2 bg-gold/5 px-2 py-2 ring-2 ring-gold/40",
         className,
       )}
     >
