@@ -93,7 +93,7 @@ type BookingState = {
   addBooking: (b: NewBooking) => Promise<{ error?: string }>;
   cancelBooking: (id: string) => Promise<{ error?: string }>;
   /** Busy ranges (epoch ms) for a shop within a window — used to block overlapping slots. */
-  fetchShopBusyRanges: (shopId: number, fromISO: string, toISO: string) => Promise<BusyRange[]>;
+  fetchShopBusyRanges: (shopId: number, fromISO: string, toISO: string) => Promise<{ ranges: BusyRange[]; error?: string }>;
 };
 
 const SELECT_COLS =
@@ -165,12 +165,13 @@ export const useBookingStore = create<BookingState>((set, get) => ({
       _from: fromISO,
       _to: toISO,
     });
-    if (error || !data) return [];
-    return (data as { starts_at: string; ends_at: string; barber_name: string | null }[]).map((r) => ({
+    if (error) return { ranges: [], error: error.message };
+    const ranges = ((data ?? []) as { starts_at: string; ends_at: string; barber_name: string | null }[]).map((r) => ({
       start: new Date(r.starts_at).getTime(),
       end: new Date(r.ends_at).getTime(),
       barber: r.barber_name,
     }));
+    return { ranges };
   },
 
   addBooking: async (b) => {

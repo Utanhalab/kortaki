@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { ArrowLeft, Check } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Check, Loader2, RefreshCw, X } from "lucide-react";
 import { shops, servicesCatalog, shopDaySlots, isOvernight } from "@/data/shops";
 import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useBookingStore, type BusyRange } from "@/store/useStores";
 import { useBarberStore } from "@/store/useBarberStore";
 import { formatKz } from "@/lib/format";
@@ -45,16 +46,30 @@ export default function Booking() {
 
   // Busy ranges for the selected day (+ the overnight tail into the next day)
   const fetchShopBusyRanges = useBookingStore((s) => s.fetchShopBusyRanges);
+  const myBookings = useBookingStore((s) => s.bookings);
+  const fetchBookings = useBookingStore((s) => s.fetchBookings);
+  const cancelBooking = useBookingStore((s) => s.cancelBooking);
   const [busy, setBusy] = useState<BusyRange[]>([]);
+  const [busyLoading, setBusyLoading] = useState(false);
+  const [busyError, setBusyError] = useState<string | null>(null);
+  const [cancelling, setCancelling] = useState<string | null>(null);
   const shopId = shop?.id;
-  useEffect(() => {
-    if (!shopId || !selectedDate) { setBusy([]); return; }
-    let alive = true;
+
+  const loadBusy = useCallback(async () => {
+    if (!shopId || !selectedDate) { setBusy([]); setBusyError(null); return; }
+    setBusyLoading(true);
+    setBusyError(null);
     const from = new Date(`${selectedDate}T00:00:00`);
     const to = new Date(from.getTime() + 48 * 60 * 60 * 1000);
-    fetchShopBusyRanges(shopId, from.toISOString(), to.toISOString()).then((r) => { if (alive) setBusy(r); });
-    return () => { alive = false; };
+    const res = await fetchShopBusyRanges(shopId, from.toISOString(), to.toISOString());
+    if (res.error) setBusyError(res.error);
+    else setBusy(res.ranges);
+    setBusyLoading(false);
   }, [shopId, selectedDate, fetchShopBusyRanges]);
+
+  useEffect(() => { loadBusy(); }, [loadBusy]);
+  useEffect(() => { fetchBookings(); }, [fetchBookings]);
+
 
 
   if (!shop) return null;
@@ -101,6 +116,37 @@ export default function Booking() {
     const end = start + duration;
     return busy.some((r) => start < r.end && end > r.start);
   };
+  /** The overlapping busy range for a slot, if any. */
+  const busyAt = (t: string, nextDay: boolean) => {
+    const start = slotStart(t, nextDay);
+    if (start === null) return null;
+    const end = start + duration;
+    return busy.find((r) => start < r.end && end > r.start) ?? null;
+  };
+  /** The current user's own booking overlapping this slot (cancellable). */
+  const myBookingAt = (t: string, nextDay: boolean) => {
+    const start = slotStart(t, nextDay);
+    if (start === null) return null;
+    const end = start + duration;
+    return (
+      myBookings.find((b) => {
+        if (b.shopId !== shop!.id || b.status === "cancelled") return false;
+        const bs = new Date(`${b.date}T${b.time}:00`).getTime();
+        const be = bs + b.durationMinutes * 60000;
+        return start < be && end > bs;
+      }) ?? null
+    );
+  };
+  const cancelMine = async (bookingId: string) => {
+    setCancelling(bookingId);
+    const res = await cancelBooking(bookingId);
+    setCancelling(null);
+    if (res.error) { toast.error("Não foi possível cancelar"); return; }
+    toast.success("Reserva cancelada — slot libertado");
+    await loadBusy();
+  };
+
+
 
   const confirm = async () => {
     if (!canConfirm || !svc) return;
@@ -122,10 +168,7 @@ export default function Booking() {
     if (res.error === "conflict") {
       toast.error("Esse horário já foi reservado. Escolhe outro.");
       setTime("");
-      if (shop && selectedDate) {
-        const from = new Date(`${selectedDate}T00:00:00`);
-        setBusy(await fetchShopBusyRanges(shop.id, from.toISOString(), new Date(from.getTime() + 48 * 3600000).toISOString()));
-      }
+      await loadBusy();
       return;
     }
     if (res.error) {
@@ -256,33 +299,88 @@ export default function Booking() {
             Horário de funcionamento: {shop.opensAt} – {shop.closingTime}
             {isOvernight(shop) && " (fecha no dia seguinte)"}
           </div>
-          <div className="grid grid-cols-3 gap-2">
-            {slots.map(({ time: t, working, nextDay }) => {
-              const past = isPastTime(t, nextDay);
-              const booked = working && !past && isTaken(t, nextDay);
-              const taken = !working || booked || past;
-              const sel = selectedTime === t;
-              return (
-                <button
-                  key={t}
-                  disabled={taken}
-                  title={!working ? "Fora do horário de funcionamento" : past ? "Horário já passou" : booked ? "Já reservado" : nextDay ? "Dia seguinte" : undefined}
+          {busyLoading ? (
+            <div className="grid grid-cols-3 gap-2">
+              {Array.from({ length: 12 }).map((_, i) => (
+                <div key={i} className="h-11 animate-pulse rounded-xl bg-muted" />
+              ))}
+            </div>
+          ) : busyError ? (
+            <div className="flex flex-col items-center gap-2 rounded-2xl border border-destructive/40 bg-destructive/5 p-4 text-center">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+              <p className="text-xs text-muted-foreground">Não foi possível carregar a disponibilidade.</p>
+              <Button size="sm" variant="outline" className="rounded-full" onClick={() => loadBusy()}>
+                <RefreshCw className="mr-1.5 h-3.5 w-3.5" /> Tentar novamente
+              </Button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-3 gap-2">
+              {slots.map(({ time: t, working, nextDay }) => {
+                const past = isPastTime(t, nextDay);
+                const booked = working && !past && isTaken(t, nextDay);
+                const taken = !working || booked || past;
+                const sel = selectedTime === t;
+                const mine = booked ? myBookingAt(t, nextDay) : null;
+                const range = booked ? busyAt(t, nextDay) : null;
+                const cls = cn(
+                  "relative w-full rounded-xl border py-2.5 text-sm font-semibold transition-all",
+                  taken && "border-border bg-muted text-muted-foreground line-through opacity-50",
+                  booked && "cursor-pointer opacity-70 line-through",
+                  !taken && sel && "border-gold bg-primary text-gold",
+                  !taken && !sel && "border-border bg-card hover:bg-muted",
+                );
+                const label = (
+                  <>
+                    {t}
+                    {nextDay && working && <span className="ml-1 align-super text-[9px]">+1</span>}
+                  </>
+                );
 
-                  onClick={() => setTime(t)}
-                  className={cn(
-                    "relative rounded-xl border py-2.5 text-sm font-semibold transition-all",
-                    taken && "border-border bg-muted text-muted-foreground line-through opacity-50",
-                    !taken && sel && "border-gold bg-primary text-gold",
-                    !taken && !sel && "border-border bg-card hover:bg-muted",
-                  )}
-                >
-                  {t}
-                  {nextDay && working && <span className="ml-1 align-super text-[9px]">+1</span>}
-                </button>
-              );
-            })}
+                if (booked && range) {
+                  return (
+                    <Popover key={t}>
+                      <PopoverTrigger asChild>
+                        <button type="button" className={cls} title="Já reservado — ver detalhes">{label}</button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-60 rounded-2xl p-3 text-xs" align="center">
+                        <p className="font-display text-sm font-bold">Slot reservado</p>
+                        <div className="mt-2 space-y-1">
+                          <Row k="Horário" v={`${fmtTime(range.start)} – ${fmtTime(range.end)}`} />
+                          <Row k="Barbeiro" v={range.barber ?? "Qualquer disponível"} />
+                          {mine && <Row k="Serviço" v={mine.service} />}
+                          <Row k="Reserva" v={mine ? "Tua reserva" : "De outro cliente"} />
+                        </div>
+                        {mine && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={cancelling === mine.id}
+                            onClick={() => cancelMine(mine.id)}
+                            className="mt-3 w-full rounded-full border-destructive/40 text-destructive"
+                          >
+                            {cancelling === mine.id ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <X className="mr-1.5 h-3.5 w-3.5" />}
+                            Cancelar e libertar slot
+                          </Button>
+                        )}
+                      </PopoverContent>
+                    </Popover>
+                  );
+                }
 
-          </div>
+                return (
+                  <button
+                    key={t}
+                    disabled={taken}
+                    title={!working ? "Fora do horário de funcionamento" : past ? "Horário já passou" : nextDay ? "Dia seguinte" : undefined}
+                    onClick={() => setTime(t)}
+                    className={cls}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </StepSection>
 
         {/* Summary */}
@@ -325,4 +423,8 @@ function Row({ k, v }: { k: string; v: string }) {
       <span className="font-medium">{v}</span>
     </div>
   );
+}
+
+function fmtTime(ms: number) {
+  return new Date(ms).toLocaleTimeString("pt-PT", { hour: "2-digit", minute: "2-digit" });
 }
