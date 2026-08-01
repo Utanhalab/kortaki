@@ -136,10 +136,7 @@ export default function Booking() {
     if (res.error === "conflict") {
       toast.error("Esse horário já foi reservado. Escolhe outro.");
       setTime("");
-      if (shop && selectedDate) {
-        const from = new Date(`${selectedDate}T00:00:00`);
-        setBusy(await fetchShopBusyRanges(shop.id, from.toISOString(), new Date(from.getTime() + 48 * 3600000).toISOString()));
-      }
+      await loadBusy();
       return;
     }
     if (res.error) {
