@@ -49,19 +49,15 @@ export default function AdminOwners() {
     }
     const list = (data ?? []) as OwnerRow[];
     setRows(list);
-    const ids = [...new Set(list.map((r) => r.shop_id))];
-    if (ids.length) {
-      const { data: entries } = await supabase
-        .from("queue_entries")
-        .select("shop_id")
-        .in("shop_id", ids)
-        .in("status", ["waiting", "called", "serving"]);
-      const c: Record<number, number> = {};
-      (entries ?? []).forEach((e) => {
-        c[e.shop_id] = (c[e.shop_id] ?? 0) + 1;
-      });
-      setCounts(c);
-    }
+    const { data: entries } = await supabase
+      .from("queue_entries")
+      .select("shop_id")
+      .in("status", ["waiting", "called", "serving"]);
+    const c: Record<number, number> = {};
+    (entries ?? []).forEach((e) => {
+      c[e.shop_id] = (c[e.shop_id] ?? 0) + 1;
+    });
+    setCounts(c);
   };
 
   useEffect(() => {
