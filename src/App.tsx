@@ -55,6 +55,7 @@ const App = () => (
               <Route path="/dashboard/queue" element={<OwnerQueue />} />
               <Route path="/dashboard/barber/profile" element={<BarberEdit />} />
               <Route path="/dashboard/gallery/upload" element={<GalleryUpload />} />
+              <Route path="/dashboard/admin" element={<AdminOwners />} />
               <Route path="/gallery" element={<Gallery />} />
               <Route path="/gallery/search" element={<GallerySearch />} />
               <Route path="/gallery/style/:styleId" element={<StyleDetail />} />
