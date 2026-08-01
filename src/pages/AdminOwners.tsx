@@ -149,41 +149,74 @@ export default function AdminOwners() {
         </form>
 
         <div>
-          <h2 className="mb-2 font-display text-base font-bold">Atribuições ativas ({rows.length})</h2>
-          {rows.length === 0 ? (
-            <p className="rounded-2xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-              Ainda não há donos atribuídos.
-            </p>
-          ) : (
-            <div className="space-y-2">
-              {rows.map((r) => {
-                const shop = shops.find((s) => s.id === r.shop_id);
-                return (
-                  <div key={r.id} className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3">
+          <div className="mb-2 flex items-center justify-between gap-3">
+            <h2 className="font-display text-base font-bold">Barbearias ({shops.length})</h2>
+            <span className="text-[11px] text-muted-foreground">{rows.length} dono(s) atribuído(s)</span>
+          </div>
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Procurar barbearia ou email…"
+            className="mb-3 w-full rounded-xl border border-border bg-background px-3 py-2 text-sm outline-none focus:border-gold"
+          />
+          <div className="space-y-2">
+            {visibleShops.length === 0 && (
+              <p className="rounded-2xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+                Nenhuma barbearia encontrada.
+              </p>
+            )}
+            {visibleShops.map((s) => {
+              const owners = rows.filter((r) => r.shop_id === s.id);
+              return (
+                <div key={s.id} className="rounded-2xl border border-border bg-card p-3">
+                  <div className="flex items-center gap-3">
                     <div className="min-w-0 flex-1">
-                      <p className="truncate font-semibold leading-tight">{r.email}</p>
-                      <p className="truncate text-[11px] text-muted-foreground">{shop?.name ?? `Loja #${r.shop_id}`}</p>
+                      <p className="truncate font-display text-sm font-bold leading-tight">{s.name}</p>
+                      <p className="truncate text-[11px] text-muted-foreground">
+                        {owners.length === 0 ? "Sem dono atribuído" : `${owners.length} dono(s)`}
+                      </p>
                     </div>
                     <Link
-                      to={`/dashboard/queue?shop=${r.shop_id}`}
+                      to={`/dashboard/queue?shop=${s.id}`}
                       className="flex items-center gap-1 rounded-full bg-muted px-3 py-1.5 text-[11px] font-semibold"
                     >
                       <ListOrdered className="h-3.5 w-3.5" />
-                      {counts[r.shop_id] ?? 0} na fila
+                      {counts[s.id] ?? 0} na fila
                     </Link>
                     <button
-                      onClick={() => remove(r.id)}
-                      aria-label="Remover atribuição"
-                      className="grid h-8 w-8 place-items-center rounded-full bg-muted text-destructive"
+                      onClick={() => {
+                        setShopId(s.id);
+                        window.scrollTo({ top: 0, behavior: "smooth" });
+                      }}
+                      aria-label={`Atribuir dono a ${s.name}`}
+                      className="grid h-8 w-8 place-items-center rounded-full bg-muted text-gold"
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <UserPlus className="h-4 w-4" />
                     </button>
                   </div>
-                );
-              })}
-            </div>
-          )}
+
+                  {owners.length > 0 && (
+                    <ul className="mt-3 space-y-1.5 border-t border-border pt-3">
+                      {owners.map((r) => (
+                        <li key={r.id} className="flex items-center gap-2">
+                          <span className="min-w-0 flex-1 truncate text-sm">{r.email}</span>
+                          <button
+                            onClick={() => remove(r.id)}
+                            aria-label={`Remover ${r.email}`}
+                            className="grid h-8 w-8 place-items-center rounded-full bg-muted text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
+
       </div>
     </div>
   );
