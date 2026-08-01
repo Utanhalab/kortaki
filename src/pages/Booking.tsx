@@ -45,16 +45,30 @@ export default function Booking() {
 
   // Busy ranges for the selected day (+ the overnight tail into the next day)
   const fetchShopBusyRanges = useBookingStore((s) => s.fetchShopBusyRanges);
+  const myBookings = useBookingStore((s) => s.bookings);
+  const fetchBookings = useBookingStore((s) => s.fetchBookings);
+  const cancelBooking = useBookingStore((s) => s.cancelBooking);
   const [busy, setBusy] = useState<BusyRange[]>([]);
+  const [busyLoading, setBusyLoading] = useState(false);
+  const [busyError, setBusyError] = useState<string | null>(null);
+  const [cancelling, setCancelling] = useState<string | null>(null);
   const shopId = shop?.id;
-  useEffect(() => {
-    if (!shopId || !selectedDate) { setBusy([]); return; }
-    let alive = true;
+
+  const loadBusy = useCallback(async () => {
+    if (!shopId || !selectedDate) { setBusy([]); setBusyError(null); return; }
+    setBusyLoading(true);
+    setBusyError(null);
     const from = new Date(`${selectedDate}T00:00:00`);
     const to = new Date(from.getTime() + 48 * 60 * 60 * 1000);
-    fetchShopBusyRanges(shopId, from.toISOString(), to.toISOString()).then((r) => { if (alive) setBusy(r); });
-    return () => { alive = false; };
+    const res = await fetchShopBusyRanges(shopId, from.toISOString(), to.toISOString());
+    if (res.error) setBusyError(res.error);
+    else setBusy(res.ranges);
+    setBusyLoading(false);
   }, [shopId, selectedDate, fetchShopBusyRanges]);
+
+  useEffect(() => { loadBusy(); }, [loadBusy]);
+  useEffect(() => { fetchBookings(); }, [fetchBookings]);
+
 
 
   if (!shop) return null;
