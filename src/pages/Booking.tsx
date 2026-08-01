@@ -1,16 +1,15 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { ArrowLeft, Check } from "lucide-react";
 import { shops, servicesCatalog, shopDaySlots, isOvernight } from "@/data/shops";
 import { Button } from "@/components/ui/button";
-import { useBookingStore } from "@/store/useStores";
+import { useBookingStore, type BusyRange } from "@/store/useStores";
 import { useBarberStore } from "@/store/useBarberStore";
 import { formatKz } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { StepHeading, StepHint, StepSection, firstMissing, type StepRequirement } from "@/components/StepGate";
 
-const TAKEN = new Set(["10:00","11:30","15:00","17:30"]);
 
 function next7Days() {
   const days: { key: string; name: string; num: string }[] = [];
@@ -44,6 +43,20 @@ export default function Booking() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Busy ranges for the selected day (+ the overnight tail into the next day)
+  const fetchShopBusyRanges = useBookingStore((s) => s.fetchShopBusyRanges);
+  const [busy, setBusy] = useState<BusyRange[]>([]);
+  const shopId = shop?.id;
+  useEffect(() => {
+    if (!shopId || !selectedDate) { setBusy([]); return; }
+    let alive = true;
+    const from = new Date(`${selectedDate}T00:00:00`);
+    const to = new Date(from.getTime() + 48 * 60 * 60 * 1000);
+    fetchShopBusyRanges(shopId, from.toISOString(), to.toISOString()).then((r) => { if (alive) setBusy(r); });
+    return () => { alive = false; };
+  }, [shopId, selectedDate, fetchShopBusyRanges]);
+
+
   if (!shop) return null;
   const days = next7Days();
   const svc = servicesCatalog.find((s) => s.id === selectedService);
@@ -74,6 +87,21 @@ export default function Booking() {
   const isNextDaySlot = (t: string) => slots.find((s) => s.time === t)?.nextDay ?? false;
   const effectiveDate = selectedDate && isNextDaySlot(selectedTime ?? "") ? addDay(selectedDate) : selectedDate;
 
+  /** Absolute start of a slot, resolving overnight (+1 day) slots. */
+  const slotStart = (t: string, nextDay: boolean) => {
+    if (!selectedDate) return null;
+    const day = nextDay ? addDay(selectedDate) : selectedDate;
+    return new Date(`${day}T${t}:00`).getTime();
+  };
+  const duration = (svc?.duration ?? 30) * 60000;
+  /** A slot conflicts when its [start, start+duration) window overlaps an existing booking. */
+  const isTaken = (t: string, nextDay: boolean) => {
+    const start = slotStart(t, nextDay);
+    if (start === null) return false;
+    const end = start + duration;
+    return busy.some((r) => start < r.end && end > r.start);
+  };
+
   const confirm = async () => {
     if (!canConfirm || !svc) return;
     const res = await addBooking({
@@ -84,10 +112,20 @@ export default function Booking() {
       date: effectiveDate!,
       time: selectedTime!,
       price: svc.price,
+      durationMinutes: svc.duration,
     });
     if (res.error === "auth") {
       toast.error("Inicia sessão para reservar");
       navigate("/auth");
+      return;
+    }
+    if (res.error === "conflict") {
+      toast.error("Esse horário já foi reservado. Escolhe outro.");
+      setTime("");
+      if (shop && selectedDate) {
+        const from = new Date(`${selectedDate}T00:00:00`);
+        setBusy(await fetchShopBusyRanges(shop.id, from.toISOString(), new Date(from.getTime() + 48 * 3600000).toISOString()));
+      }
       return;
     }
     if (res.error) {
@@ -98,6 +136,7 @@ export default function Booking() {
     reset();
     navigate("/bookings");
   };
+
 
 
   return (
@@ -220,13 +259,15 @@ export default function Booking() {
           <div className="grid grid-cols-3 gap-2">
             {slots.map(({ time: t, working, nextDay }) => {
               const past = isPastTime(t, nextDay);
-              const taken = !working || TAKEN.has(t) || past;
+              const booked = working && !past && isTaken(t, nextDay);
+              const taken = !working || booked || past;
               const sel = selectedTime === t;
               return (
                 <button
                   key={t}
                   disabled={taken}
-                  title={!working ? "Fora do horário de funcionamento" : past ? "Horário já passou" : nextDay ? "Dia seguinte" : undefined}
+                  title={!working ? "Fora do horário de funcionamento" : past ? "Horário já passou" : booked ? "Já reservado" : nextDay ? "Dia seguinte" : undefined}
+
                   onClick={() => setTime(t)}
                   className={cn(
                     "relative rounded-xl border py-2.5 text-sm font-semibold transition-all",
