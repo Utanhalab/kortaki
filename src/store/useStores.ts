@@ -129,6 +129,7 @@ function fromRow(r: Row): Booking {
     date: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`,
     time: `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`,
     price: r.price,
+    durationMinutes: r.duration_minutes ?? 30,
     status,
   };
 }
@@ -152,24 +153,46 @@ export const useBookingStore = create<BookingState>((set, get) => ({
     set({ loading: true });
     const { data, error } = await supabase
       .from("bookings")
-      .select("id, shop_id, shop_name, service_name, barber_name, appointment_at, price, status")
+      .select(SELECT_COLS)
       .eq("user_id", auth.user.id)
       .order("appointment_at", { ascending: false });
-    set({ bookings: error || !data ? [] : (data as Row[]).map(fromRow), loading: false });
+    set({ bookings: error || !data ? [] : (data as unknown as Row[]).map(fromRow), loading: false });
+  },
+
+  fetchShopBusyRanges: async (shopId, fromISO, toISO) => {
+    const { data, error } = await supabase.rpc("shop_busy_ranges", {
+      _shop_id: shopId,
+      _from: fromISO,
+      _to: toISO,
+    });
+    if (error || !data) return [];
+    return (data as { starts_at: string; ends_at: string; barber_name: string | null }[]).map((r) => ({
+      start: new Date(r.starts_at).getTime(),
+      end: new Date(r.ends_at).getTime(),
+      barber: r.barber_name,
+    }));
   },
 
   addBooking: async (b) => {
     const { data: auth } = await supabase.auth.getUser();
     if (!auth.user) return { error: "auth" };
-    const { data, error } = await supabase
-      .from("bookings")
-      .insert(toRow(b, auth.user.id))
-      .select("id, shop_id, shop_name, service_name, barber_name, appointment_at, price, status")
-      .single();
-    if (error || !data) return { error: error?.message ?? "insert" };
-    set({ bookings: [fromRow(data as Row), ...get().bookings] });
+    const { data, error } = await supabase.rpc("create_booking", {
+      _shop_id: b.shopId,
+      _shop_name: b.shopName,
+      _service_name: b.service,
+      _barber_name: b.barber,
+      _appointment_at: new Date(`${b.date}T${b.time}:00`).toISOString(),
+      _duration_minutes: b.durationMinutes,
+      _price: b.price,
+    });
+    if (error || !data) {
+      const msg = error?.message ?? "insert";
+      return { error: msg.includes("slot_taken") ? "conflict" : msg.includes("auth required") ? "auth" : msg };
+    }
+    set({ bookings: [fromRow(data as unknown as Row), ...get().bookings] });
     return {};
   },
+
 
   cancelBooking: async (id) => {
     const prev = get().bookings;
