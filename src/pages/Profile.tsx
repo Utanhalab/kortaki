@@ -10,10 +10,10 @@ import { toast } from "sonner";
 
 export default function Profile() {
   const { bookings, fetchBookings } = useBookingStore();
-  const { saved } = useShopStore();
+  const { saved, fetchSaved } = useShopStore();
   const [lang, setLang] = useState(true);
   const { user, signOut } = useAuth();
-  useEffect(() => { fetchBookings(); }, [fetchBookings, user?.id]);
+  useEffect(() => { fetchBookings(); fetchSaved(); }, [fetchBookings, fetchSaved, user?.id]);
 
   const settings = [
     { icon: Bell, label: "Notificações", right: <Switch defaultChecked /> },

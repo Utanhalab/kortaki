@@ -1,12 +1,16 @@
+import { useEffect } from "react";
 import { useShopStore } from "@/store/useStores";
 import { shops } from "@/data/shops";
 import { ShopCard } from "@/components/ShopCard";
 import { Heart } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/lib/auth";
 
 export default function Saved() {
-  const { saved } = useShopStore();
+  const { saved, fetchSaved } = useShopStore();
+  const { user } = useAuth();
+  useEffect(() => { fetchSaved(); }, [fetchSaved, user?.id]);
   const list = shops.filter((s) => saved.includes(s.id));
 
   return (

@@ -19,7 +19,8 @@ export default function ShopDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const shop = shops.find((s) => s.id === Number(id));
-  const { saved, toggleSave } = useShopStore();
+  const { saved, toggleSave, fetchSaved } = useShopStore();
+  useEffect(() => { fetchSaved(); }, [fetchSaved]);
   const [joinOpen, setJoinOpen] = useState(false);
   const summary = useQueueStore((s) => s.summaries[Number(id)]);
   const loadSummaries = useQueueStore((s) => s.loadSummaries);
@@ -62,7 +63,12 @@ export default function ShopDetail() {
             <ArrowLeft className="h-5 w-5" />
           </button>
           <button
-            onClick={() => { toggleSave(shop.id); toast.success(isSaved ? "Removido" : "Guardado"); }}
+            onClick={async () => {
+              const { error } = await toggleSave(shop.id);
+              if (error === "auth") { toast.error("Inicia sessão para guardar"); navigate("/auth"); return; }
+              if (error) { toast.error("Não foi possível guardar"); return; }
+              toast.success(isSaved ? "Removido" : "Guardado");
+            }}
             className="grid h-10 w-10 place-items-center rounded-full bg-white/90 text-primary shadow"
           >
             <Heart className={cn("h-5 w-5", isSaved && "fill-destructive text-destructive")} />
