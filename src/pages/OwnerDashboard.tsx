@@ -1,19 +1,24 @@
 import { Link } from "react-router-dom";
 import { shops } from "@/data/shops";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useQueueStore } from "@/store/useQueueStore";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/lib/auth";
 import {
   ArrowLeft,
   BarChart3,
   Calendar,
   ImagePlus,
   ListOrdered,
+  ShieldCheck,
   Users,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 export default function OwnerDashboard() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const [isAdmin, setIsAdmin] = useState(false);
   const { summaries, loadSummaries } = useQueueStore();
   const shopIds = shops.map((s) => s.id);
 
@@ -22,6 +27,17 @@ export default function OwnerDashboard() {
     const i = setInterval(() => loadSummaries(shopIds), 15000);
     return () => clearInterval(i);
   }, []); // eslint-disable-line
+
+  useEffect(() => {
+    if (!user) {
+      setIsAdmin(false);
+      return;
+    }
+    supabase
+      .rpc("has_role", { _user_id: user.id, _role: "admin" })
+      .then(({ data }) => setIsAdmin(Boolean(data)));
+  }, [user]);
+
 
   const totalWaiting = shopIds.reduce((acc, id) => acc + (summaries[id]?.count ?? 0), 0);
   const openShops = shopIds.filter((id) => summaries[id]?.isOpen !== false).length;
