@@ -207,6 +207,7 @@ export type Database = {
           cancelled_by: string | null
           cancelled_reason: string | null
           created_at: string
+          duration_minutes: number
           id: string
           price: number
           reminded_types: string[]
@@ -225,6 +226,7 @@ export type Database = {
           cancelled_by?: string | null
           cancelled_reason?: string | null
           created_at?: string
+          duration_minutes?: number
           id?: string
           price?: number
           reminded_types?: string[]
@@ -243,6 +245,7 @@ export type Database = {
           cancelled_by?: string | null
           cancelled_reason?: string | null
           created_at?: string
+          duration_minutes?: number
           id?: string
           price?: number
           reminded_types?: string[]
@@ -871,12 +874,58 @@ export type Database = {
           user_id: string
         }[]
       }
+      create_booking: {
+        Args: {
+          _appointment_at: string
+          _barber_name: string
+          _duration_minutes: number
+          _price: number
+          _service_name: string
+          _shop_id: number
+          _shop_name: string
+          _style_photo_id?: string
+          _style_reference_url?: string
+        }
+        Returns: {
+          appointment_at: string
+          barber_name: string | null
+          cancelled_by: string | null
+          cancelled_reason: string | null
+          created_at: string
+          duration_minutes: number
+          id: string
+          price: number
+          reminded_types: string[]
+          service_name: string
+          shop_id: number
+          shop_name: string
+          status: string
+          style_photo_id: string | null
+          style_reference_url: string | null
+          updated_at: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "bookings"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
         Returns: boolean
+      }
+      shop_busy_ranges: {
+        Args: { _from: string; _shop_id: number; _to: string }
+        Returns: {
+          barber_name: string
+          ends_at: string
+          starts_at: string
+        }[]
       }
     }
     Enums: {
