@@ -259,13 +259,15 @@ export default function Booking() {
           <div className="grid grid-cols-3 gap-2">
             {slots.map(({ time: t, working, nextDay }) => {
               const past = isPastTime(t, nextDay);
-              const taken = !working || TAKEN.has(t) || past;
+              const booked = working && !past && isTaken(t, nextDay);
+              const taken = !working || booked || past;
               const sel = selectedTime === t;
               return (
                 <button
                   key={t}
                   disabled={taken}
-                  title={!working ? "Fora do horário de funcionamento" : past ? "Horário já passou" : nextDay ? "Dia seguinte" : undefined}
+                  title={!working ? "Fora do horário de funcionamento" : past ? "Horário já passou" : booked ? "Já reservado" : nextDay ? "Dia seguinte" : undefined}
+
                   onClick={() => setTime(t)}
                   className={cn(
                     "relative rounded-xl border py-2.5 text-sm font-semibold transition-all",
