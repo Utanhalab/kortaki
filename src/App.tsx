@@ -25,6 +25,7 @@ import StyleDetail from "./pages/StyleDetail";
 import GallerySearch from "./pages/GallerySearch";
 import Wishlist from "./pages/Wishlist";
 import GalleryUpload from "./pages/GalleryUpload";
+import AdminOwners from "./pages/AdminOwners";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
