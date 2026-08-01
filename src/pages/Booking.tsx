@@ -252,7 +252,7 @@ export default function Booking() {
               <Row k="Barbearia" v={shop.name} />
               <Row k="Serviço" v={svc.name} />
               <Row k="Barbeiro" v={selectedBarber!} />
-              <Row k="Data" v={selectedDate!} />
+              <Row k="Data" v={effectiveDate!} />
               <Row k="Hora" v={selectedTime!} />
               <div className="mt-2 flex justify-between border-t border-gold/30 pt-2">
                 <span className="font-semibold">Total</span>
