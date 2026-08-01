@@ -66,11 +66,6 @@ export default function Booking() {
     return h * 60 + m <= nowMinutes;
   };
 
-  useEffect(() => {
-    if (selectedTime && isPastTime(selectedTime)) setTime("");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedDate]);
-
   const confirm = async () => {
     if (!canConfirm || !svc) return;
     const res = await addBooking({
@@ -186,7 +181,13 @@ export default function Booking() {
             {days.map((d) => (
               <button
                 key={d.key}
-                onClick={() => setDate(d.key)}
+                onClick={() => {
+                  setDate(d.key);
+                  if (d.key === todayKey && selectedTime) {
+                    const [h, m] = selectedTime.split(":").map(Number);
+                    if (h * 60 + m <= nowMinutes) setTime("");
+                  }
+                }}
                 className={cn(
                   "flex w-16 shrink-0 flex-col items-center rounded-2xl border py-3 transition-all",
                   selectedDate === d.key ? "border-gold bg-primary text-gold" : "border-border bg-card text-foreground",
