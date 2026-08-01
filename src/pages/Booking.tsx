@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { ArrowLeft, Check } from "lucide-react";
-import { shops, servicesCatalog, shopDaySlots } from "@/data/shops";
+import { shops, servicesCatalog, shopDaySlots, isOvernight } from "@/data/shops";
 import { Button } from "@/components/ui/button";
 import { useBookingStore } from "@/store/useStores";
 import { useBarberStore } from "@/store/useBarberStore";
