@@ -49,10 +49,9 @@ export default function Booking() {
   const svc = servicesCatalog.find((s) => s.id === selectedService);
   const canConfirm = !!(selectedService && selectedBarber && selectedDate && selectedTime);
 
-  const confirm = () => {
+  const confirm = async () => {
     if (!canConfirm || !svc) return;
-    addBooking({
-      id: crypto.randomUUID(),
+    const res = await addBooking({
       shopId: shop.id,
       shopName: shop.name,
       service: svc.name,
@@ -60,8 +59,16 @@ export default function Booking() {
       date: selectedDate!,
       time: selectedTime!,
       price: svc.price,
-      status: "upcoming",
     });
+    if (res.error === "auth") {
+      toast.error("Inicia sessão para reservar");
+      navigate("/auth");
+      return;
+    }
+    if (res.error) {
+      toast.error("Não foi possível confirmar a reserva");
+      return;
+    }
     toast.success("Reserva confirmada!");
     reset();
     navigate("/bookings");

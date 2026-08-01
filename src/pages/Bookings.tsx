@@ -1,4 +1,6 @@
+import { useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useAuth } from "@/lib/auth";
 import { useBookingStore } from "@/store/useStores";
 import { useQueueStore } from "@/store/useQueueStore";
 import { Button } from "@/components/ui/button";
@@ -9,8 +11,10 @@ import { Link } from "react-router-dom";
 import { shops } from "@/data/shops";
 
 export default function Bookings() {
-  const { bookings, cancelBooking } = useBookingStore();
+  const { bookings, cancelBooking, fetchBookings, loading } = useBookingStore();
+  const { user } = useAuth();
   const { myEntries, leaveQueue } = useQueueStore();
+  useEffect(() => { fetchBookings(); }, [fetchBookings, user?.id]);
   const upcoming = bookings.filter((b) => b.status === "upcoming");
   const past = bookings.filter((b) => b.status === "past");
   const cancelled = bookings.filter((b) => b.status === "cancelled");
@@ -70,8 +74,15 @@ export default function Bookings() {
         </TabsContent>
 
         <TabsContent value="upcoming" className="mt-4 space-y-3">
-          {upcoming.length === 0 ? <Empty /> : upcoming.map((b) => (
-            <BookingCard key={b.id} b={b} onCancel={() => { cancelBooking(b.id); toast("Reserva cancelada"); }} />
+          {loading ? (
+            <div className="h-28 animate-pulse rounded-2xl bg-muted" />
+          ) : !user ? (
+            <Empty label="Inicia sessão para ver as tuas reservas" />
+          ) : upcoming.length === 0 ? <Empty /> : upcoming.map((b) => (
+            <BookingCard key={b.id} b={b} onCancel={async () => {
+              const r = await cancelBooking(b.id);
+              r.error ? toast.error("Não foi possível cancelar") : toast("Reserva cancelada");
+            }} />
           ))}
         </TabsContent>
         <TabsContent value="past" className="mt-4 space-y-3">

@@ -2,17 +2,18 @@ import { Bell, MapPin, Languages, HelpCircle, LogOut, ChevronRight, LogIn, User 
 import { useBookingStore, useShopStore } from "@/store/useStores";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { shops } from "@/data/shops";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 
 export default function Profile() {
-  const { bookings } = useBookingStore();
+  const { bookings, fetchBookings } = useBookingStore();
   const { saved } = useShopStore();
   const [lang, setLang] = useState(true);
   const { user, signOut } = useAuth();
+  useEffect(() => { fetchBookings(); }, [fetchBookings, user?.id]);
 
   const settings = [
     { icon: Bell, label: "Notificações", right: <Switch defaultChecked /> },
