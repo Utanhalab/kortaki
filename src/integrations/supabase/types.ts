@@ -867,9 +867,15 @@ export type Database = {
       admin_list_shop_owners: {
         Args: never
         Returns: {
+          account_exists: boolean
           created_at: string
           email: string
+          email_confirmed: boolean
+          has_owner_role: boolean
           id: string
+          is_banned: boolean
+          is_deleted: boolean
+          last_sign_in_at: string
           shop_id: number
           user_id: string
         }[]
