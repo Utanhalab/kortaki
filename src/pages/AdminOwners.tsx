@@ -360,7 +360,30 @@ export default function AdminOwners() {
                               </span>
                             </div>
                             <button
-                              onClick={() => remove(r.id)}
+                              onClick={() => revalidate(r)}
+                              disabled={revalidating === r.id}
+                              aria-label={`Revalidar ${r.email}`}
+                              title="Revalidar estado da conta"
+                              className="grid h-8 w-8 place-items-center rounded-full bg-muted text-gold disabled:opacity-50"
+                            >
+                              <RefreshCw className={`h-4 w-4 ${revalidating === r.id ? "animate-spin" : ""}`} />
+                            </button>
+                            <button
+                              onClick={async () => {
+                                setRevalidating(r.id);
+                                const { data } = await supabase.rpc("admin_check_owner_status", {
+                                  _user_id: r.user_id,
+                                });
+                                setRevalidating(null);
+                                const fresh = (data ?? [])[0] as OwnerRow | undefined;
+                                const st2 = fresh ? ownerStatus({ ...r, ...fresh }) : st;
+                                if (!st2.ok) {
+                                  toast.error("Estado inválido — remoção recomendada", {
+                                    description: st2.reason,
+                                  });
+                                }
+                                remove(r.id);
+                              }}
                               aria-label={`Remover ${r.email}`}
                               className="grid h-8 w-8 place-items-center rounded-full bg-muted text-destructive"
                             >
@@ -377,7 +400,57 @@ export default function AdminOwners() {
           </div>
         </div>
 
+        <div className="rounded-2xl border border-border bg-card p-4">
+          <div className="flex items-center gap-2">
+            <History className="h-4 w-4 text-gold" />
+            <h2 className="flex-1 font-display text-base font-bold">Auditoria de atribuições</h2>
+            <button
+              onClick={loadAudit}
+              className="grid h-8 w-8 place-items-center rounded-full bg-muted text-gold"
+              aria-label="Actualizar auditoria"
+            >
+              <RefreshCw className={`h-4 w-4 ${auditLoading ? "animate-spin" : ""}`} />
+            </button>
+            <button
+              onClick={() => setShowAudit((v) => !v)}
+              className="rounded-full bg-muted px-3 py-1.5 text-[11px] font-semibold"
+            >
+              {showAudit ? "Ocultar" : `Ver (${audit.length})`}
+            </button>
+          </div>
+
+          {showAudit && (
+            <ul className="mt-3 space-y-2 border-t border-border pt-3">
+              {audit.length === 0 && (
+                <li className="py-4 text-center text-sm text-muted-foreground">Sem registos ainda.</li>
+              )}
+              {audit.map((a) => (
+                <li key={a.id} className="rounded-xl bg-muted/50 p-2.5">
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                        a.action === "assign" ? "bg-gold/15 text-gold" : "bg-destructive/10 text-destructive"
+                      }`}
+                    >
+                      {a.action === "assign" ? "Atribuição" : "Remoção"}
+                    </span>
+                    <span className="truncate text-xs font-semibold">
+                      {shops.find((s) => s.id === a.shop_id)?.name ?? `Loja #${a.shop_id}`}
+                    </span>
+                    <span className="ml-auto shrink-0 text-[10px] text-muted-foreground">
+                      {new Date(a.created_at).toLocaleString("pt-PT")}
+                    </span>
+                  </div>
+                  <p className="mt-1 truncate text-[11px] text-muted-foreground">
+                    Dono: {a.target_email ?? "—"} · Por: {a.actor_email ?? "sistema"}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </div>
+
     </div>
   );
 }
