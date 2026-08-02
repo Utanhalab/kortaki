@@ -409,6 +409,14 @@ export default function AdminOwners() {
                 </div>
               );
             })}
+            {matchedShops.length > visibleShops.length && (
+              <button
+                onClick={() => setPageSize((n) => n + 10)}
+                className="w-full rounded-2xl border border-border bg-muted px-4 py-2.5 text-xs font-semibold text-gold"
+              >
+                Carregar mais ({matchedShops.length - visibleShops.length} restantes)
+              </button>
+            )}
           </div>
         </div>
 
@@ -417,7 +425,8 @@ export default function AdminOwners() {
             <History className="h-4 w-4 text-gold" />
             <h2 className="flex-1 font-display text-base font-bold">Auditoria de atribuições</h2>
             <button
-              onClick={loadAudit}
+              onClick={() => loadAudit(auditLimit)}
+
               className="grid h-8 w-8 place-items-center rounded-full bg-muted text-gold"
               aria-label="Actualizar auditoria"
             >
