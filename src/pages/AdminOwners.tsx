@@ -1,6 +1,15 @@
 import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { ArrowLeft, ShieldCheck, Trash2, UserPlus, ListOrdered, AlertTriangle } from "lucide-react";
+import {
+  ArrowLeft,
+  ShieldCheck,
+  Trash2,
+  UserPlus,
+  ListOrdered,
+  AlertTriangle,
+  RefreshCw,
+  History,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { shops } from "@/data/shops";
@@ -20,13 +29,49 @@ type OwnerRow = {
   last_sign_in_at: string | null;
 };
 
-function ownerStatus(r: OwnerRow) {
-  if (!r.account_exists || r.is_deleted) return { ok: false, label: "Conta removida" };
-  if (r.is_banned) return { ok: false, label: "Conta suspensa" };
-  if (!r.email_confirmed) return { ok: false, label: "Email por confirmar" };
-  if (!r.has_owner_role) return { ok: false, label: "Sem permissão de dono" };
-  return { ok: true, label: "Conta activa" };
+type AuditRow = {
+  id: string;
+  action: string;
+  shop_id: number;
+  target_email: string | null;
+  actor_email: string | null;
+  details: string | null;
+  created_at: string;
+};
+
+type StatusKey = "ok" | "removed" | "banned" | "unconfirmed" | "no_role";
+
+const STATUS_FILTERS: { key: StatusKey | "all"; label: string }[] = [
+  { key: "all", label: "Todos" },
+  { key: "ok", label: "Activa" },
+  { key: "banned", label: "Suspensa" },
+  { key: "removed", label: "Removida" },
+  { key: "no_role", label: "Sem permissão" },
+  { key: "unconfirmed", label: "Por confirmar" },
+];
+
+function ownerStatus(r: OwnerRow): { key: StatusKey; ok: boolean; label: string; reason: string } {
+  if (!r.account_exists || r.is_deleted)
+    return { key: "removed", ok: false, label: "Conta removida", reason: "A conta associada já não existe." };
+  if (r.is_banned)
+    return { key: "banned", ok: false, label: "Conta suspensa", reason: "A conta está suspensa/banida." };
+  if (!r.email_confirmed)
+    return {
+      key: "unconfirmed",
+      ok: false,
+      label: "Email por confirmar",
+      reason: "O utilizador ainda não confirmou o email.",
+    };
+  if (!r.has_owner_role)
+    return {
+      key: "no_role",
+      ok: false,
+      label: "Sem permissão de dono",
+      reason: "A conta não tem o papel de dono atribuído.",
+    };
+  return { key: "ok", ok: true, label: "Conta activa", reason: "Conta válida e com permissões." };
 }
+
 
 export default function AdminOwners() {
   const navigate = useNavigate();
