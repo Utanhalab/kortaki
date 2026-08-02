@@ -168,10 +168,10 @@ export const useBarberStore = create<BarberStore>((set, get) => ({
   fetchReviews: async (id) => {
     const { data } = await (supabase as any)
       .from("barber_reviews")
-      .select("*")
+      .select("id, barber_id, customer_name, rating, comment, photo_url, service_name, barber_reply, replied_at, created_at")
       .eq("barber_id", id)
       .order("created_at", { ascending: false });
-    const list = (data ?? []) as BarberReview[];
+    const list = ((data ?? []) as any[]).map((r) => ({ ...r, user_id: null })) as BarberReview[];
     set((s) => ({ reviews: { ...s.reviews, [id]: list } }));
     return list;
   },

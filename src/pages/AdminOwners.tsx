@@ -114,7 +114,12 @@ export default function AdminOwners() {
       return;
     }
     (async () => {
-      const { data } = await supabase.rpc("is_platform_admin");
+      const { data } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .eq("role", "admin")
+        .maybeSingle();
       setIsAdmin(Boolean(data));
     })();
   }, [user, loading, navigate]);
