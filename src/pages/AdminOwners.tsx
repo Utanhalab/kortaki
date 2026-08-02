@@ -6,7 +6,27 @@ import { useAuth } from "@/lib/auth";
 import { shops } from "@/data/shops";
 import { toast } from "sonner";
 
-type OwnerRow = { id: string; user_id: string; shop_id: number; email: string; created_at: string };
+type OwnerRow = {
+  id: string;
+  user_id: string;
+  shop_id: number;
+  email: string;
+  created_at: string;
+  account_exists: boolean;
+  email_confirmed: boolean;
+  is_banned: boolean;
+  is_deleted: boolean;
+  has_owner_role: boolean;
+  last_sign_in_at: string | null;
+};
+
+function ownerStatus(r: OwnerRow) {
+  if (!r.account_exists || r.is_deleted) return { ok: false, label: "Conta removida" };
+  if (r.is_banned) return { ok: false, label: "Conta suspensa" };
+  if (!r.email_confirmed) return { ok: false, label: "Email por confirmar" };
+  if (!r.has_owner_role) return { ok: false, label: "Sem permissão de dono" };
+  return { ok: true, label: "Conta activa" };
+}
 
 export default function AdminOwners() {
   const navigate = useNavigate();
