@@ -340,6 +340,42 @@ export type Database = {
         }
         Relationships: []
       }
+      owner_audit_log: {
+        Row: {
+          action: string
+          actor_email: string | null
+          actor_id: string | null
+          created_at: string
+          details: string | null
+          id: string
+          shop_id: number
+          target_email: string | null
+          target_user_id: string | null
+        }
+        Insert: {
+          action: string
+          actor_email?: string | null
+          actor_id?: string | null
+          created_at?: string
+          details?: string | null
+          id?: string
+          shop_id: number
+          target_email?: string | null
+          target_user_id?: string | null
+        }
+        Update: {
+          action?: string
+          actor_email?: string | null
+          actor_id?: string | null
+          created_at?: string
+          details?: string | null
+          id?: string
+          shop_id?: number
+          target_email?: string | null
+          target_user_id?: string | null
+        }
+        Relationships: []
+      }
       portfolio_photos: {
         Row: {
           barber_id: string
@@ -863,6 +899,31 @@ export type Database = {
       admin_assign_shop_owner: {
         Args: { _email: string; _shop_id: number }
         Returns: string
+      }
+      admin_check_owner_status: {
+        Args: { _user_id: string }
+        Returns: {
+          account_exists: boolean
+          email: string
+          email_confirmed: boolean
+          has_owner_role: boolean
+          is_banned: boolean
+          is_deleted: boolean
+          last_sign_in_at: string
+          user_id: string
+        }[]
+      }
+      admin_list_owner_audit: {
+        Args: { _limit?: number }
+        Returns: {
+          action: string
+          actor_email: string
+          created_at: string
+          details: string
+          id: string
+          shop_id: number
+          target_email: string
+        }[]
       }
       admin_list_shop_owners: {
         Args: never
