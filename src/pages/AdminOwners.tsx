@@ -138,23 +138,27 @@ export default function AdminOwners() {
     setCounts(c);
   };
 
-  const loadAudit = async () => {
+  const loadAudit = async (limit = auditLimit) => {
     setAuditLoading(true);
-    const { data, error } = await supabase.rpc("admin_list_owner_audit", { _limit: 100 });
+    const { data, error } = await supabase.rpc("admin_list_owner_audit", { _limit: limit });
     setAuditLoading(false);
     if (error) {
       toast.error("Não foi possível carregar a auditoria", { description: error.message });
       return;
     }
-    setAudit((data ?? []) as AuditRow[]);
+    const list = (data ?? []) as AuditRow[];
+    setAudit(list);
+    setAuditLimit(limit);
+    setAuditHasMore(list.length >= limit);
   };
 
   useEffect(() => {
     if (isAdmin) {
       load();
-      loadAudit();
+      loadAudit(20);
     }
   }, [isAdmin]);
+
 
   const revalidate = async (r: OwnerRow) => {
     setRevalidating(r.id);
