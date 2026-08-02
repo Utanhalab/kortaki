@@ -893,53 +893,7 @@ export type Database = {
       }
     }
     Views: {
-      barber_reviews_public: {
-        Row: {
-          barber_id: string | null
-          barber_reply: string | null
-          comment: string | null
-          created_at: string | null
-          customer_name: string | null
-          id: string | null
-          photo_url: string | null
-          rating: number | null
-          replied_at: string | null
-          service_name: string | null
-        }
-        Insert: {
-          barber_id?: string | null
-          barber_reply?: string | null
-          comment?: string | null
-          created_at?: string | null
-          customer_name?: string | null
-          id?: string | null
-          photo_url?: string | null
-          rating?: number | null
-          replied_at?: string | null
-          service_name?: string | null
-        }
-        Update: {
-          barber_id?: string | null
-          barber_reply?: string | null
-          comment?: string | null
-          created_at?: string | null
-          customer_name?: string | null
-          id?: string | null
-          photo_url?: string | null
-          rating?: number | null
-          replied_at?: string | null
-          service_name?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "barber_reviews_barber_id_fkey"
-            columns: ["barber_id"]
-            isOneToOne: false
-            referencedRelation: "barbers"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
+      [_ in never]: never
     }
     Functions: {
       admin_assign_shop_owner: {
