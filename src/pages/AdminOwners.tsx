@@ -277,6 +277,26 @@ export default function AdminOwners() {
             placeholder="Procurar barbearia ou email…"
             className="mb-3 w-full rounded-xl border border-border bg-background px-3 py-2 text-sm outline-none focus:border-gold"
           />
+          <div className="mb-3 flex flex-wrap gap-1.5">
+            {STATUS_FILTERS.map((f) => {
+              const count =
+                f.key === "all" ? rows.length : rows.filter((r) => ownerStatus(r).key === f.key).length;
+              const active = statusFilter === f.key;
+              return (
+                <button
+                  key={f.key}
+                  onClick={() => setStatusFilter(f.key)}
+                  className={`rounded-full border px-3 py-1 text-[11px] font-semibold transition ${
+                    active
+                      ? "border-gold bg-gold/15 text-gold"
+                      : "border-border bg-muted text-muted-foreground"
+                  }`}
+                >
+                  {f.label} ({count})
+                </button>
+              );
+            })}
+          </div>
           <div className="space-y-2">
             {visibleShops.length === 0 && (
               <p className="rounded-2xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
@@ -284,8 +304,9 @@ export default function AdminOwners() {
               </p>
             )}
             {visibleShops.map((s) => {
-              const owners = rows.filter((r) => r.shop_id === s.id);
+              const owners = ownersFor(s.id);
               const invalid = owners.filter((r) => !ownerStatus(r).ok);
+
               return (
                 <div key={s.id} className="rounded-2xl border border-border bg-card p-3">
                   <div className="flex items-center gap-3">
