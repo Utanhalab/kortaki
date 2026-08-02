@@ -194,6 +194,7 @@ export default function AdminOwners() {
             )}
             {visibleShops.map((s) => {
               const owners = rows.filter((r) => r.shop_id === s.id);
+              const invalid = owners.filter((r) => !ownerStatus(r).ok);
               return (
                 <div key={s.id} className="rounded-2xl border border-border bg-card p-3">
                   <div className="flex items-center gap-3">
@@ -201,6 +202,7 @@ export default function AdminOwners() {
                       <p className="truncate font-display text-sm font-bold leading-tight">{s.name}</p>
                       <p className="truncate text-[11px] text-muted-foreground">
                         {owners.length === 0 ? "Sem dono atribuído" : `${owners.length} dono(s)`}
+                        {invalid.length > 0 && ` · ${invalid.length} inválido(s)`}
                       </p>
                     </div>
                     <Link
@@ -224,18 +226,37 @@ export default function AdminOwners() {
 
                   {owners.length > 0 && (
                     <ul className="mt-3 space-y-1.5 border-t border-border pt-3">
-                      {owners.map((r) => (
-                        <li key={r.id} className="flex items-center gap-2">
-                          <span className="min-w-0 flex-1 truncate text-sm">{r.email}</span>
-                          <button
-                            onClick={() => remove(r.id)}
-                            aria-label={`Remover ${r.email}`}
-                            className="grid h-8 w-8 place-items-center rounded-full bg-muted text-destructive"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        </li>
-                      ))}
+                      {owners.map((r) => {
+                        const st = ownerStatus(r);
+                        return (
+                          <li key={r.id} className="flex items-center gap-2">
+                            <div className="min-w-0 flex-1">
+                              <p className="truncate text-sm">{r.email}</p>
+                              <span
+                                className={`mt-0.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                                  st.ok
+                                    ? "bg-muted text-muted-foreground"
+                                    : "bg-destructive/10 text-destructive"
+                                }`}
+                              >
+                                {st.ok ? (
+                                  <ShieldCheck className="h-3 w-3" />
+                                ) : (
+                                  <AlertTriangle className="h-3 w-3" />
+                                )}
+                                {st.label}
+                              </span>
+                            </div>
+                            <button
+                              onClick={() => remove(r.id)}
+                              aria-label={`Remover ${r.email}`}
+                              className="grid h-8 w-8 place-items-center rounded-full bg-muted text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </li>
+                        );
+                      })}
                     </ul>
                   )}
                 </div>
