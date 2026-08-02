@@ -88,16 +88,24 @@ export default function AdminOwners() {
   const [audit, setAudit] = useState<AuditRow[]>([]);
   const [showAudit, setShowAudit] = useState(false);
   const [auditLoading, setAuditLoading] = useState(false);
+  const [auditLimit, setAuditLimit] = useState(20);
+  const [auditHasMore, setAuditHasMore] = useState(false);
+  const [pageSize, setPageSize] = useState(10);
 
   const q = query.trim().toLowerCase();
   const matchesFilter = (r: OwnerRow) => statusFilter === "all" || ownerStatus(r).key === statusFilter;
   const ownersFor = (id: number) => rows.filter((r) => r.shop_id === id && matchesFilter(r));
-  const visibleShops = shops.filter((s) => {
+  const matchedShops = shops.filter((s) => {
     const owners = ownersFor(s.id);
     if (statusFilter !== "all" && owners.length === 0) return false;
     if (!q) return true;
     return s.name.toLowerCase().includes(q) || owners.some((r) => r.email.toLowerCase().includes(q));
   });
+  const visibleShops = matchedShops.slice(0, pageSize);
+
+  useEffect(() => {
+    setPageSize(10);
+  }, [query, statusFilter]);
 
   useEffect(() => {
     if (loading) return;
