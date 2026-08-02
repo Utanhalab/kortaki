@@ -1,6 +1,15 @@
 import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { ArrowLeft, ShieldCheck, Trash2, UserPlus, ListOrdered, AlertTriangle } from "lucide-react";
+import {
+  ArrowLeft,
+  ShieldCheck,
+  Trash2,
+  UserPlus,
+  ListOrdered,
+  AlertTriangle,
+  RefreshCw,
+  History,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { shops } from "@/data/shops";
@@ -20,13 +29,49 @@ type OwnerRow = {
   last_sign_in_at: string | null;
 };
 
-function ownerStatus(r: OwnerRow) {
-  if (!r.account_exists || r.is_deleted) return { ok: false, label: "Conta removida" };
-  if (r.is_banned) return { ok: false, label: "Conta suspensa" };
-  if (!r.email_confirmed) return { ok: false, label: "Email por confirmar" };
-  if (!r.has_owner_role) return { ok: false, label: "Sem permissão de dono" };
-  return { ok: true, label: "Conta activa" };
+type AuditRow = {
+  id: string;
+  action: string;
+  shop_id: number;
+  target_email: string | null;
+  actor_email: string | null;
+  details: string | null;
+  created_at: string;
+};
+
+type StatusKey = "ok" | "removed" | "banned" | "unconfirmed" | "no_role";
+
+const STATUS_FILTERS: { key: StatusKey | "all"; label: string }[] = [
+  { key: "all", label: "Todos" },
+  { key: "ok", label: "Activa" },
+  { key: "banned", label: "Suspensa" },
+  { key: "removed", label: "Removida" },
+  { key: "no_role", label: "Sem permissão" },
+  { key: "unconfirmed", label: "Por confirmar" },
+];
+
+function ownerStatus(r: OwnerRow): { key: StatusKey; ok: boolean; label: string; reason: string } {
+  if (!r.account_exists || r.is_deleted)
+    return { key: "removed", ok: false, label: "Conta removida", reason: "A conta associada já não existe." };
+  if (r.is_banned)
+    return { key: "banned", ok: false, label: "Conta suspensa", reason: "A conta está suspensa/banida." };
+  if (!r.email_confirmed)
+    return {
+      key: "unconfirmed",
+      ok: false,
+      label: "Email por confirmar",
+      reason: "O utilizador ainda não confirmou o email.",
+    };
+  if (!r.has_owner_role)
+    return {
+      key: "no_role",
+      ok: false,
+      label: "Sem permissão de dono",
+      reason: "A conta não tem o papel de dono atribuído.",
+    };
+  return { key: "ok", ok: true, label: "Conta activa", reason: "Conta válida e com permissões." };
 }
+
 
 export default function AdminOwners() {
   const navigate = useNavigate();
@@ -38,16 +83,21 @@ export default function AdminOwners() {
   const [busy, setBusy] = useState(false);
   const [counts, setCounts] = useState<Record<number, number>>({});
   const [query, setQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<StatusKey | "all">("all");
+  const [revalidating, setRevalidating] = useState<string | null>(null);
+  const [audit, setAudit] = useState<AuditRow[]>([]);
+  const [showAudit, setShowAudit] = useState(false);
+  const [auditLoading, setAuditLoading] = useState(false);
 
   const q = query.trim().toLowerCase();
-  const visibleShops = q
-    ? shops.filter(
-        (s) =>
-          s.name.toLowerCase().includes(q) ||
-          rows.some((r) => r.shop_id === s.id && r.email.toLowerCase().includes(q)),
-      )
-    : shops;
-
+  const matchesFilter = (r: OwnerRow) => statusFilter === "all" || ownerStatus(r).key === statusFilter;
+  const ownersFor = (id: number) => rows.filter((r) => r.shop_id === id && matchesFilter(r));
+  const visibleShops = shops.filter((s) => {
+    const owners = ownersFor(s.id);
+    if (statusFilter !== "all" && owners.length === 0) return false;
+    if (!q) return true;
+    return s.name.toLowerCase().includes(q) || owners.some((r) => r.email.toLowerCase().includes(q));
+  });
 
   useEffect(() => {
     if (loading) return;
@@ -80,9 +130,43 @@ export default function AdminOwners() {
     setCounts(c);
   };
 
+  const loadAudit = async () => {
+    setAuditLoading(true);
+    const { data, error } = await supabase.rpc("admin_list_owner_audit", { _limit: 100 });
+    setAuditLoading(false);
+    if (error) {
+      toast.error("Não foi possível carregar a auditoria", { description: error.message });
+      return;
+    }
+    setAudit((data ?? []) as AuditRow[]);
+  };
+
   useEffect(() => {
-    if (isAdmin) load();
+    if (isAdmin) {
+      load();
+      loadAudit();
+    }
   }, [isAdmin]);
+
+  const revalidate = async (r: OwnerRow) => {
+    setRevalidating(r.id);
+    const { data, error } = await supabase.rpc("admin_check_owner_status", { _user_id: r.user_id });
+    setRevalidating(null);
+    if (error) {
+      toast.error("Falha ao revalidar", { description: error.message });
+      return;
+    }
+    const fresh = (data ?? [])[0] as Omit<OwnerRow, "id" | "shop_id" | "created_at"> | undefined;
+    if (!fresh) {
+      toast.error("Sem resposta do servidor");
+      return;
+    }
+    const updated: OwnerRow = { ...r, ...fresh, email: fresh.email ?? r.email };
+    setRows((prev) => prev.map((x) => (x.id === r.id ? updated : x)));
+    const st = ownerStatus(updated);
+    if (st.ok) toast.success(`${updated.email}: ${st.label}`, { description: st.reason });
+    else toast.error(`${updated.email}: ${st.label}`, { description: st.reason });
+  };
 
   const assign = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -94,23 +178,30 @@ export default function AdminOwners() {
     });
     setBusy(false);
     if (error) {
-      toast.error(error.message);
+      const shopName = shops.find((s) => s.id === shopId)?.name ?? `#${shopId}`;
+      toast.error("Não foi possível atribuir este proprietário", {
+        description: `${email.trim()} → ${shopName}\nMotivo: ${error.message}`,
+        duration: 8000,
+      });
       return;
     }
     toast.success("Dono atribuído com sucesso");
     setEmail("");
     load();
+    loadAudit();
   };
 
   const remove = async (id: string) => {
     const { error } = await supabase.from("shop_owners").delete().eq("id", id);
     if (error) {
-      toast.error(error.message);
+      toast.error("Não foi possível remover", { description: error.message });
       return;
     }
     toast.success("Atribuição removida");
     load();
+    loadAudit();
   };
+
 
   if (loading || isAdmin === null) {
     return <div className="p-6 text-sm text-muted-foreground">A carregar…</div>;
@@ -186,6 +277,26 @@ export default function AdminOwners() {
             placeholder="Procurar barbearia ou email…"
             className="mb-3 w-full rounded-xl border border-border bg-background px-3 py-2 text-sm outline-none focus:border-gold"
           />
+          <div className="mb-3 flex flex-wrap gap-1.5">
+            {STATUS_FILTERS.map((f) => {
+              const count =
+                f.key === "all" ? rows.length : rows.filter((r) => ownerStatus(r).key === f.key).length;
+              const active = statusFilter === f.key;
+              return (
+                <button
+                  key={f.key}
+                  onClick={() => setStatusFilter(f.key)}
+                  className={`rounded-full border px-3 py-1 text-[11px] font-semibold transition ${
+                    active
+                      ? "border-gold bg-gold/15 text-gold"
+                      : "border-border bg-muted text-muted-foreground"
+                  }`}
+                >
+                  {f.label} ({count})
+                </button>
+              );
+            })}
+          </div>
           <div className="space-y-2">
             {visibleShops.length === 0 && (
               <p className="rounded-2xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
@@ -193,8 +304,9 @@ export default function AdminOwners() {
               </p>
             )}
             {visibleShops.map((s) => {
-              const owners = rows.filter((r) => r.shop_id === s.id);
+              const owners = ownersFor(s.id);
               const invalid = owners.filter((r) => !ownerStatus(r).ok);
+
               return (
                 <div key={s.id} className="rounded-2xl border border-border bg-card p-3">
                   <div className="flex items-center gap-3">
@@ -248,7 +360,30 @@ export default function AdminOwners() {
                               </span>
                             </div>
                             <button
-                              onClick={() => remove(r.id)}
+                              onClick={() => revalidate(r)}
+                              disabled={revalidating === r.id}
+                              aria-label={`Revalidar ${r.email}`}
+                              title="Revalidar estado da conta"
+                              className="grid h-8 w-8 place-items-center rounded-full bg-muted text-gold disabled:opacity-50"
+                            >
+                              <RefreshCw className={`h-4 w-4 ${revalidating === r.id ? "animate-spin" : ""}`} />
+                            </button>
+                            <button
+                              onClick={async () => {
+                                setRevalidating(r.id);
+                                const { data } = await supabase.rpc("admin_check_owner_status", {
+                                  _user_id: r.user_id,
+                                });
+                                setRevalidating(null);
+                                const fresh = (data ?? [])[0] as OwnerRow | undefined;
+                                const st2 = fresh ? ownerStatus({ ...r, ...fresh }) : st;
+                                if (!st2.ok) {
+                                  toast.error("Estado inválido — remoção recomendada", {
+                                    description: st2.reason,
+                                  });
+                                }
+                                remove(r.id);
+                              }}
                               aria-label={`Remover ${r.email}`}
                               className="grid h-8 w-8 place-items-center rounded-full bg-muted text-destructive"
                             >
@@ -265,7 +400,57 @@ export default function AdminOwners() {
           </div>
         </div>
 
+        <div className="rounded-2xl border border-border bg-card p-4">
+          <div className="flex items-center gap-2">
+            <History className="h-4 w-4 text-gold" />
+            <h2 className="flex-1 font-display text-base font-bold">Auditoria de atribuições</h2>
+            <button
+              onClick={loadAudit}
+              className="grid h-8 w-8 place-items-center rounded-full bg-muted text-gold"
+              aria-label="Actualizar auditoria"
+            >
+              <RefreshCw className={`h-4 w-4 ${auditLoading ? "animate-spin" : ""}`} />
+            </button>
+            <button
+              onClick={() => setShowAudit((v) => !v)}
+              className="rounded-full bg-muted px-3 py-1.5 text-[11px] font-semibold"
+            >
+              {showAudit ? "Ocultar" : `Ver (${audit.length})`}
+            </button>
+          </div>
+
+          {showAudit && (
+            <ul className="mt-3 space-y-2 border-t border-border pt-3">
+              {audit.length === 0 && (
+                <li className="py-4 text-center text-sm text-muted-foreground">Sem registos ainda.</li>
+              )}
+              {audit.map((a) => (
+                <li key={a.id} className="rounded-xl bg-muted/50 p-2.5">
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                        a.action === "assign" ? "bg-gold/15 text-gold" : "bg-destructive/10 text-destructive"
+                      }`}
+                    >
+                      {a.action === "assign" ? "Atribuição" : "Remoção"}
+                    </span>
+                    <span className="truncate text-xs font-semibold">
+                      {shops.find((s) => s.id === a.shop_id)?.name ?? `Loja #${a.shop_id}`}
+                    </span>
+                    <span className="ml-auto shrink-0 text-[10px] text-muted-foreground">
+                      {new Date(a.created_at).toLocaleString("pt-PT")}
+                    </span>
+                  </div>
+                  <p className="mt-1 truncate text-[11px] text-muted-foreground">
+                    Dono: {a.target_email ?? "—"} · Por: {a.actor_email ?? "sistema"}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </div>
+
     </div>
   );
 }
