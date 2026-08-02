@@ -467,7 +467,19 @@ export default function AdminOwners() {
                   </p>
                 </li>
               ))}
+              {auditHasMore && (
+                <li>
+                  <button
+                    onClick={() => loadAudit(auditLimit + 20)}
+                    disabled={auditLoading}
+                    className="w-full rounded-xl border border-border bg-muted px-4 py-2.5 text-xs font-semibold text-gold disabled:opacity-50"
+                  >
+                    {auditLoading ? "A carregar…" : "Carregar mais registos"}
+                  </button>
+                </li>
+              )}
             </ul>
+
           )}
         </div>
       </div>
