@@ -88,16 +88,24 @@ export default function AdminOwners() {
   const [audit, setAudit] = useState<AuditRow[]>([]);
   const [showAudit, setShowAudit] = useState(false);
   const [auditLoading, setAuditLoading] = useState(false);
+  const [auditLimit, setAuditLimit] = useState(20);
+  const [auditHasMore, setAuditHasMore] = useState(false);
+  const [pageSize, setPageSize] = useState(10);
 
   const q = query.trim().toLowerCase();
   const matchesFilter = (r: OwnerRow) => statusFilter === "all" || ownerStatus(r).key === statusFilter;
   const ownersFor = (id: number) => rows.filter((r) => r.shop_id === id && matchesFilter(r));
-  const visibleShops = shops.filter((s) => {
+  const matchedShops = shops.filter((s) => {
     const owners = ownersFor(s.id);
     if (statusFilter !== "all" && owners.length === 0) return false;
     if (!q) return true;
     return s.name.toLowerCase().includes(q) || owners.some((r) => r.email.toLowerCase().includes(q));
   });
+  const visibleShops = matchedShops.slice(0, pageSize);
+
+  useEffect(() => {
+    setPageSize(10);
+  }, [query, statusFilter]);
 
   useEffect(() => {
     if (loading) return;
@@ -130,23 +138,27 @@ export default function AdminOwners() {
     setCounts(c);
   };
 
-  const loadAudit = async () => {
+  const loadAudit = async (limit = auditLimit) => {
     setAuditLoading(true);
-    const { data, error } = await supabase.rpc("admin_list_owner_audit", { _limit: 100 });
+    const { data, error } = await supabase.rpc("admin_list_owner_audit", { _limit: limit });
     setAuditLoading(false);
     if (error) {
       toast.error("Não foi possível carregar a auditoria", { description: error.message });
       return;
     }
-    setAudit((data ?? []) as AuditRow[]);
+    const list = (data ?? []) as AuditRow[];
+    setAudit(list);
+    setAuditLimit(limit);
+    setAuditHasMore(list.length >= limit);
   };
 
   useEffect(() => {
     if (isAdmin) {
       load();
-      loadAudit();
+      loadAudit(20);
     }
   }, [isAdmin]);
+
 
   const revalidate = async (r: OwnerRow) => {
     setRevalidating(r.id);
@@ -397,6 +409,14 @@ export default function AdminOwners() {
                 </div>
               );
             })}
+            {matchedShops.length > visibleShops.length && (
+              <button
+                onClick={() => setPageSize((n) => n + 10)}
+                className="w-full rounded-2xl border border-border bg-muted px-4 py-2.5 text-xs font-semibold text-gold"
+              >
+                Carregar mais ({matchedShops.length - visibleShops.length} restantes)
+              </button>
+            )}
           </div>
         </div>
 
@@ -405,7 +425,8 @@ export default function AdminOwners() {
             <History className="h-4 w-4 text-gold" />
             <h2 className="flex-1 font-display text-base font-bold">Auditoria de atribuições</h2>
             <button
-              onClick={loadAudit}
+              onClick={() => loadAudit(auditLimit)}
+
               className="grid h-8 w-8 place-items-center rounded-full bg-muted text-gold"
               aria-label="Actualizar auditoria"
             >
@@ -446,7 +467,19 @@ export default function AdminOwners() {
                   </p>
                 </li>
               ))}
+              {auditHasMore && (
+                <li>
+                  <button
+                    onClick={() => loadAudit(auditLimit + 20)}
+                    disabled={auditLoading}
+                    className="w-full rounded-xl border border-border bg-muted px-4 py-2.5 text-xs font-semibold text-gold disabled:opacity-50"
+                  >
+                    {auditLoading ? "A carregar…" : "Carregar mais registos"}
+                  </button>
+                </li>
+              )}
             </ul>
+
           )}
         </div>
       </div>
