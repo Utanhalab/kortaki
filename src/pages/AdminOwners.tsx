@@ -83,16 +83,21 @@ export default function AdminOwners() {
   const [busy, setBusy] = useState(false);
   const [counts, setCounts] = useState<Record<number, number>>({});
   const [query, setQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<StatusKey | "all">("all");
+  const [revalidating, setRevalidating] = useState<string | null>(null);
+  const [audit, setAudit] = useState<AuditRow[]>([]);
+  const [showAudit, setShowAudit] = useState(false);
+  const [auditLoading, setAuditLoading] = useState(false);
 
   const q = query.trim().toLowerCase();
-  const visibleShops = q
-    ? shops.filter(
-        (s) =>
-          s.name.toLowerCase().includes(q) ||
-          rows.some((r) => r.shop_id === s.id && r.email.toLowerCase().includes(q)),
-      )
-    : shops;
-
+  const matchesFilter = (r: OwnerRow) => statusFilter === "all" || ownerStatus(r).key === statusFilter;
+  const ownersFor = (id: number) => rows.filter((r) => r.shop_id === id && matchesFilter(r));
+  const visibleShops = shops.filter((s) => {
+    const owners = ownersFor(s.id);
+    if (statusFilter !== "all" && owners.length === 0) return false;
+    if (!q) return true;
+    return s.name.toLowerCase().includes(q) || owners.some((r) => r.email.toLowerCase().includes(q));
+  });
 
   useEffect(() => {
     if (loading) return;
@@ -125,9 +130,43 @@ export default function AdminOwners() {
     setCounts(c);
   };
 
+  const loadAudit = async () => {
+    setAuditLoading(true);
+    const { data, error } = await supabase.rpc("admin_list_owner_audit", { _limit: 100 });
+    setAuditLoading(false);
+    if (error) {
+      toast.error("Não foi possível carregar a auditoria", { description: error.message });
+      return;
+    }
+    setAudit((data ?? []) as AuditRow[]);
+  };
+
   useEffect(() => {
-    if (isAdmin) load();
+    if (isAdmin) {
+      load();
+      loadAudit();
+    }
   }, [isAdmin]);
+
+  const revalidate = async (r: OwnerRow) => {
+    setRevalidating(r.id);
+    const { data, error } = await supabase.rpc("admin_check_owner_status", { _user_id: r.user_id });
+    setRevalidating(null);
+    if (error) {
+      toast.error("Falha ao revalidar", { description: error.message });
+      return;
+    }
+    const fresh = (data ?? [])[0] as Omit<OwnerRow, "id" | "shop_id" | "created_at"> | undefined;
+    if (!fresh) {
+      toast.error("Sem resposta do servidor");
+      return;
+    }
+    const updated: OwnerRow = { ...r, ...fresh, email: fresh.email ?? r.email };
+    setRows((prev) => prev.map((x) => (x.id === r.id ? updated : x)));
+    const st = ownerStatus(updated);
+    if (st.ok) toast.success(`${updated.email}: ${st.label}`, { description: st.reason });
+    else toast.error(`${updated.email}: ${st.label}`, { description: st.reason });
+  };
 
   const assign = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -139,23 +178,30 @@ export default function AdminOwners() {
     });
     setBusy(false);
     if (error) {
-      toast.error(error.message);
+      const shopName = shops.find((s) => s.id === shopId)?.name ?? `#${shopId}`;
+      toast.error("Não foi possível atribuir este proprietário", {
+        description: `${email.trim()} → ${shopName}\nMotivo: ${error.message}`,
+        duration: 8000,
+      });
       return;
     }
     toast.success("Dono atribuído com sucesso");
     setEmail("");
     load();
+    loadAudit();
   };
 
   const remove = async (id: string) => {
     const { error } = await supabase.from("shop_owners").delete().eq("id", id);
     if (error) {
-      toast.error(error.message);
+      toast.error("Não foi possível remover", { description: error.message });
       return;
     }
     toast.success("Atribuição removida");
     load();
+    loadAudit();
   };
+
 
   if (loading || isAdmin === null) {
     return <div className="p-6 text-sm text-muted-foreground">A carregar…</div>;
