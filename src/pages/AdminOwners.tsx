@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { ArrowLeft, ShieldCheck, Trash2, UserPlus, ListOrdered } from "lucide-react";
+import { ArrowLeft, ShieldCheck, Trash2, UserPlus, ListOrdered, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { shops } from "@/data/shops";
