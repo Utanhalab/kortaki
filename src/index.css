@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Syne:wght@500;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Rubik:wght@300;400;500;600;700&display=swap');
 @import 'leaflet/dist/leaflet.css';
 
 @tailwind base;
@@ -7,76 +7,79 @@
 
 @layer base {
   :root {
-    /* CutNear brand palette (HSL) */
-    --background: 36 10% 96%;
-    --foreground: 30 9% 16%;
+    /* CutNear — Paper & Ink (letterpress board) */
+    --background: 40 24% 95%;   /* #f5f3ee */
+    --foreground: 0 0% 5%;      /* #0d0d0d */
 
-    --card: 0 0% 100%;
-    --card-foreground: 30 9% 16%;
+    --card: 40 24% 95%;
+    --card-foreground: 0 0% 5%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 30 9% 16%;
+    --popover: 40 24% 95%;
+    --popover-foreground: 0 0% 5%;
 
-    /* Charcoal #2e2b26 */
-    --primary: 30 9% 16%;
-    --primary-foreground: 40 67% 53%;
+    /* Ink */
+    --primary: 0 0% 5%;
+    --primary-foreground: 40 24% 95%;
 
-    /* Gold #c8952a */
-    --gold: 40 65% 47%;
-    --gold-foreground: 30 9% 16%;
+    /* "gold" token retained as ink accent so existing utilities stay on-theme */
+    --gold: 0 0% 5%;
+    --gold-foreground: 40 24% 95%;
 
-    --secondary: 36 14% 92%;
-    --secondary-foreground: 30 9% 16%;
+    --secondary: 38 17% 89%;    /* #e8e4dd */
+    --secondary-foreground: 0 0% 5%;
 
-    --muted: 36 12% 90%;
-    --muted-foreground: 30 6% 40%;
+    --muted: 38 17% 89%;
+    --muted-foreground: 0 0% 18%;  /* #2d2d2d */
 
-    --accent: 40 65% 47%;
-    --accent-foreground: 30 9% 16%;
+    --accent: 38 17% 89%;
+    --accent-foreground: 0 0% 5%;
 
-    --destructive: 0 72% 51%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive: 6 60% 38%;
+    --destructive-foreground: 40 24% 95%;
 
-    --success: 142 55% 42%;
-    --warning: 38 92% 50%;
+    --success: 150 30% 28%;
+    --warning: 30 45% 35%;
 
-    --border: 30 10% 86%;
-    --input: 30 10% 86%;
-    --ring: 40 65% 47%;
+    --border: 0 0% 5%;
+    --input: 0 0% 5%;
+    --ring: 0 0% 5%;
 
-    --radius: 1rem;
+    --radius: 0rem;
 
-    --cream: 36 30% 92%;
-    --sage: 110 25% 80%;
+    --cream: 38 17% 89%;
+    --sage: 40 24% 95%;
 
-    --sidebar-background: 30 9% 16%;
-    --sidebar-foreground: 36 14% 92%;
-    --sidebar-primary: 40 65% 47%;
-    --sidebar-primary-foreground: 30 9% 16%;
-    --sidebar-accent: 30 9% 22%;
-    --sidebar-accent-foreground: 40 65% 47%;
-    --sidebar-border: 30 9% 22%;
-    --sidebar-ring: 40 65% 47%;
+    --sidebar-background: 40 24% 95%;
+    --sidebar-foreground: 0 0% 5%;
+    --sidebar-primary: 0 0% 5%;
+    --sidebar-primary-foreground: 40 24% 95%;
+    --sidebar-accent: 38 17% 89%;
+    --sidebar-accent-foreground: 0 0% 5%;
+    --sidebar-border: 0 0% 5%;
+    --sidebar-ring: 0 0% 5%;
   }
 
   .dark {
-    --background: 30 9% 12%;
-    --foreground: 36 14% 92%;
-    --card: 30 9% 16%;
-    --card-foreground: 36 14% 92%;
-    --popover: 30 9% 16%;
-    --popover-foreground: 36 14% 92%;
-    --primary: 40 65% 47%;
-    --primary-foreground: 30 9% 16%;
-    --secondary: 30 9% 22%;
-    --secondary-foreground: 36 14% 92%;
-    --muted: 30 9% 22%;
-    --muted-foreground: 30 6% 65%;
-    --accent: 40 65% 47%;
-    --accent-foreground: 30 9% 16%;
-    --border: 30 9% 22%;
-    --input: 30 9% 22%;
-    --ring: 40 65% 47%;
+    --background: 0 0% 5%;
+    --foreground: 40 24% 95%;
+    --card: 0 0% 8%;
+    --card-foreground: 40 24% 95%;
+    --popover: 0 0% 8%;
+    --popover-foreground: 40 24% 95%;
+    --primary: 40 24% 95%;
+    --primary-foreground: 0 0% 5%;
+    --gold: 40 24% 95%;
+    --gold-foreground: 0 0% 5%;
+    --secondary: 0 0% 14%;
+    --secondary-foreground: 40 24% 95%;
+    --muted: 0 0% 14%;
+    --muted-foreground: 38 10% 72%;
+    --accent: 0 0% 14%;
+    --accent-foreground: 40 24% 95%;
+    --cream: 0 0% 14%;
+    --border: 40 24% 95%;
+    --input: 40 24% 95%;
+    --ring: 40 24% 95%;
   }
 }
 
@@ -91,15 +94,17 @@
 
   body {
     @apply bg-background text-foreground;
-    font-family: 'DM Sans', system-ui, sans-serif;
+    font-family: 'Rubik', system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
   }
 
   h1, h2, h3, h4, .font-display {
-    font-family: 'Syne', system-ui, sans-serif;
-    letter-spacing: -0.01em;
+    font-family: 'Space Mono', ui-monospace, monospace;
+    letter-spacing: -0.03em;
+    text-transform: uppercase;
   }
 }
+
 
 @layer utilities {
   .no-scrollbar::-webkit-scrollbar { display: none; }
