@@ -112,12 +112,19 @@
 
   .phone-frame {
     box-shadow:
-      0 0 0 1px hsl(var(--border)),
-      0 30px 80px -20px rgba(46, 43, 38, 0.35),
-      0 10px 30px -10px rgba(46, 43, 38, 0.2);
+      0 0 0 2px hsl(var(--foreground)),
+      12px 12px 0 0 hsl(var(--foreground));
+  }
+
+  .press-shadow { box-shadow: 6px 6px 0 0 hsl(var(--foreground)); }
+  .press-shadow-sm { box-shadow: 4px 4px 0 0 hsl(var(--foreground)); }
+  .paper-dots {
+    background-image: radial-gradient(hsl(var(--foreground) / 0.35) 1px, transparent 1px);
+    background-size: 20px 20px;
   }
 
   .text-gold { color: hsl(var(--gold)); }
   .bg-gold { background-color: hsl(var(--gold)); }
   .border-gold { border-color: hsl(var(--gold)); }
 }
+
