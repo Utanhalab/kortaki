@@ -130,18 +130,14 @@
 
   /* Ink accent on ink surfaces must invert to paper */
   .bg-primary .text-gold,
-  .bg-primary .fill-gold,
-  .bg-foreground .text-gold,
-  .bg-gold .text-gold { color: hsl(var(--primary-foreground)); }
+  .bg-foreground .text-gold { color: hsl(var(--primary-foreground)); }
   .bg-primary .fill-gold,
   .bg-foreground .fill-gold { fill: hsl(var(--primary-foreground)); }
   .bg-primary .bg-gold,
   .bg-foreground .bg-gold { background-color: hsl(var(--primary-foreground)); color: hsl(var(--primary)); }
   .bg-primary .border-gold,
   .bg-foreground .border-gold { border-color: hsl(var(--primary-foreground)); }
-  .bg-primary .text-primary,
-  .bg-foreground .text-primary { color: hsl(var(--primary-foreground)); }
-  .bg-gold .text-primary { color: hsl(var(--gold-foreground)); }
 }
+
 
 
