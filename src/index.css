@@ -103,7 +103,13 @@
     letter-spacing: -0.03em;
     text-transform: uppercase;
   }
+
+  /* Letterpress board: squared corners across the app */
+  [class*="rounded"] {
+    border-radius: 0 !important;
+  }
 }
+
 
 
 @layer utilities {
